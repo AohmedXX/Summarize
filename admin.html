@@ -1,0 +1,618 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Database</title>
+    <link rel="icon" href="duckk.jpg">
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://unpkg.com/lucide@latest"></script>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Cairo:wght@300;400;600;700&display=swap');
+        body {
+            font-family: 'Cairo', sans-serif;
+        }
+        .animate-fade-in-up { animation: fadeInUp 300ms ease-out both; }
+        @keyframes fadeInUp { 0% { opacity:0; transform: translateY(8px);} 100% { opacity:1; transform: translateY(0);} }
+    </style>
+</head>
+<body class="bg-slate-50 dark:bg-slate-900 min-h-screen transition-colors duration-200">
+    <!-- Toast Notification System -->
+    <script src="toast.js"></script>
+    <script src="app.js"></script>
+
+    <nav class="bg-white dark:bg-gray-900 shadow-sm sticky top-0 z-50 border-b border-gray-100 dark:border-gray-800 transition-colors duration-200">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="flex justify-between h-16 items-center">
+                <div class="flex items-center">
+                    <a href="index.html" class="ml-2 inline-flex items-center" aria-label="Home">
+                        <i data-lucide="database" class="h-8 w-8 text-indigo-600"></i>
+                    </a>
+                    <span class="text-2xl font-bold text-gray-900 dark:text-white" data-i18n="adminTitle">قاعدة البيانات (Admin)</span>
+                </div>
+                <div class="flex items-center gap-4">
+                    <a href="index.html" class="text-gray-600 dark:text-gray-300 hover:text-blue-600 dark:hover:text-blue-400 px-3 py-2 rounded-md transition font-medium flex items-center gap-2">
+                        <i data-lucide="folder-open" class="h-4 w-4"></i>
+                        <span data-i18n="browse">Browse Files</span>
+                    </a>
+                    <div class="flex items-center gap-2 border-r border-gray-200 dark:border-gray-700 pr-4 mr-2">
+                        <button onclick="appManager.toggleTheme()" class="p-2 rounded-full hover:bg-gray-100 dark:hover:bg-gray-800 text-gray-600 dark:text-gray-300 transition" aria-label="Toggle Theme">
+                            <i data-lucide="moon" class="h-5 w-5 hidden dark:block"></i>
+                            <i data-lucide="sun" class="h-5 w-5 block dark:hidden"></i>
+                        </button>
+                        <button onclick="appManager.toggleLanguage()" class="p-2 rounded-full hover:bg-gray-100 dark:hover:bg-gray-800 text-gray-600 dark:text-gray-300 transition" aria-label="Toggle Language">
+                            <i data-lucide="languages" class="h-5 w-5"></i>
+                        </button>
+                    </div>
+                    <div id="authSection" class="flex items-center gap-2 sm:gap-4"></div>
+                </div>
+            </div>
+        </div>
+    </nav>
+
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
+        
+        <!-- Users Section -->
+        <div class="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-100 dark:border-gray-700 p-6 mb-8 transition-colors duration-200 animate-fade-in-up">
+            <div class="flex justify-between items-center mb-6">
+                <h2 class="text-xl font-bold text-gray-900 dark:text-white flex items-center gap-2">
+                    <i data-lucide="users" class="h-5 w-5 text-indigo-600 dark:text-indigo-400"></i>
+                    <span data-i18n="registeredUsers">المستخدمون المسجلون</span>
+                </h2>
+                <div class="flex items-center gap-2">
+                    <button class="px-3 py-1 rounded bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300 text-xs" onclick="deleteSelectedUsers()" data-i18n="deleteSelected">حذف المحدد</button>
+                    <button class="px-3 py-1 rounded bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300 text-xs" onclick="editSelectedUser()" data-i18n="editSelected">تعديل المحدد</button>
+                    <span id="usersCount" class="bg-indigo-100 dark:bg-indigo-900/30 text-indigo-800 dark:text-indigo-300 text-xs font-semibold px-2.5 py-0.5 rounded">0</span>
+                </div>
+            </div>
+            <div class="overflow-x-auto">
+                <table class="min-w-full divide-y divide-gray-200 dark:divide-gray-700">
+                    <thead class="bg-gray-50 dark:bg-gray-700/50">
+                        <tr>
+                            <th class="px-6 py-3 text-right text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
+                                <input type="checkbox" id="usersSelectAll" onchange="toggleUsersSelectAll(this.checked)">
+                                <label for="usersSelectAll" class="ml-2 text-xs" data-i18n="selectAll">تحديد الكل</label>
+                            </th>
+                            <th scope="col" class="px-6 py-3 text-right text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider" data-i18n="avatar">الصورة</th>
+                            <th scope="col" class="px-6 py-3 text-right text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider" data-i18n="fullName">الاسم</th>
+                            <th scope="col" class="px-6 py-3 text-right text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider" data-i18n="email">البريد الإلكتروني</th>
+                            <th scope="col" class="px-6 py-3 text-right text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider" data-i18n="role">الدور</th>
+                            <th scope="col" class="px-6 py-3 text-right text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider" data-i18n="userId">المعرف</th>
+                            <th scope="col" class="px-6 py-3 text-right text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider" data-i18n="date">التاريخ</th>
+                            <th scope="col" class="px-6 py-3"></th>
+                        </tr>
+                    </thead>
+                    <tbody id="usersTable" class="bg-white dark:bg-gray-800 divide-y divide-gray-200 dark:divide-gray-700">
+                        <!-- Users will be injected here -->
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
+        <!-- Files Section -->
+        <div class="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-100 dark:border-gray-700 p-6 transition-colors duration-200 animate-fade-in-up">
+            <div class="flex justify-between items-center mb-6">
+                <h2 class="text-xl font-bold text-gray-900 dark:text-white flex items-center gap-2">
+                    <i data-lucide="files" class="h-5 w-5 text-blue-600 dark:text-blue-400"></i>
+                    <span data-i18n="uploadedFiles">الملفات المرفوعة</span>
+                </h2>
+                <div class="flex items-center gap-2">
+                    <button class="px-3 py-1 rounded bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300 text-xs" onclick="deleteSelectedFiles()" data-i18n="deleteSelected">حذف المحدد</button>
+                    <button class="px-3 py-1 rounded bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300 text-xs" onclick="editSelectedFile()" data-i18n="editSelected">تعديل المحدد</button>
+                    <span id="filesCount" class="bg-blue-100 dark:bg-blue-900/30 text-blue-800 dark:text-blue-300 text-xs font-semibold px-2.5 py-0.5 rounded">0</span>
+                </div>
+            </div>
+            <div class="overflow-x-auto">
+                <table class="min-w-full divide-y divide-gray-200 dark:divide-gray-700">
+                    <thead class="bg-gray-50 dark:bg-gray-700/50">
+                        <tr>
+                            <th class="px-6 py-3 text-right text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
+                                <input type="checkbox" id="filesSelectAll" onchange="toggleFilesSelectAll(this.checked)">
+                                <label for="filesSelectAll" class="ml-2 text-xs" data-i18n="selectAll">تحديد الكل</label>
+                            </th>
+                            <th scope="col" class="px-6 py-3 text-right text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider" data-i18n="fileTitle">العنوان</th>
+                            <th scope="col" class="px-6 py-3 text-right text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider" data-i18n="subject">المادة</th>
+                            <th scope="col" class="px-6 py-3 text-right text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider" data-i18n="fileType">النوع</th>
+                            <th scope="col" class="px-6 py-3 text-right text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider" data-i18n="size">الحجم</th>
+                            <th scope="col" class="px-6 py-3 text-right text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider" data-i18n="date">التاريخ</th>
+                        </tr>
+                    </thead>
+                    <tbody id="filesTable" class="bg-white dark:bg-gray-800 divide-y divide-gray-200 dark:divide-gray-700">
+                        <!-- Files will be injected here -->
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
+        <!-- Review Queue Section -->
+        <div class="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-100 dark:border-gray-700 p-6 mt-8 transition-colors duration-200 animate-fade-in-up">
+            <div class="flex justify-between items-center mb-6">
+                <h2 class="text-xl font-bold text-gray-900 dark:text-white flex items-center gap-2">
+                    <i data-lucide="shield-check" class="h-5 w-5 text-emerald-600 dark:text-emerald-400"></i>
+                    <span data-i18n="reviewQueue">قائمة المراجعة</span>
+                </h2>
+                <span id="reviewCount" class="bg-emerald-100 dark:bg-emerald-900/30 text-emerald-800 dark:text-emerald-300 text-xs font-semibold px-2.5 py-0.5 rounded">0</span>
+            </div>
+            <div class="overflow-x-auto">
+                <table class="min-w-full divide-y divide-gray-200 dark:divide-gray-700">
+                    <thead class="bg-gray-50 dark:bg-gray-700/50">
+                        <tr>
+                            <th class="px-6 py-3 text-right text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider" data-i18n="fileTitle">العنوان</th>
+                            <th class="px-6 py-3 text-right text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider" data-i18n="subject">المادة</th>
+                            <th class="px-6 py-3 text-right text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider" data-i18n="fileType">النوع</th>
+                            <th class="px-6 py-3 text-right text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider" data-i18n="size">الحجم</th>
+                            <th class="px-6 py-3 text-right text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider" data-i18n="date">التاريخ</th>
+                            <th class="px-6 py-3 text-right text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider" data-i18n="pendingReview">قيد المراجعة</th>
+                            <th class="px-6 py-3"></th>
+                        </tr>
+                    </thead>
+                    <tbody id="reviewTable" class="bg-white dark:bg-gray-800 divide-y divide-gray-200 dark:divide-gray-700"></tbody>
+                </table>
+            </div>
+        </div>
+
+        <!-- Messages Section removed per request -->
+
+        <!-- Danger Zone -->
+        <div class="mt-12 bg-red-50 dark:bg-red-900/10 rounded-xl border border-red-100 dark:border-red-900/30 p-6 transition-colors duration-200 animate-fade-in-up">
+            <h3 class="text-lg font-bold text-red-800 dark:text-red-400 mb-2" data-i18n="dangerZone">منطقة الخطر</h3>
+            <p class="text-sm text-red-600 dark:text-red-300/80 mb-4" data-i18n="irreversibleWarning">هذه الإجراءات لا يمكن التراجع عنها.</p>
+            <button onclick="clearAllData()" class="bg-red-600 text-white px-4 py-2 rounded-lg hover:bg-red-700 transition text-sm font-medium" data-i18n="clearData">
+                حذف جميع البيانات (تصفير قاعدة البيانات)
+            </button>
+        </div>
+
+    </div>
+
+    <script type="module" src="app.js"></script>
+    <script>
+        // Check for Admin Role
+        document.addEventListener('DOMContentLoaded', () => {
+             // الانتظار قليلاً للتأكد من تحميل app.js
+             setTimeout(() => {
+                if (!window.auth || !window.auth.isAuthenticated() || window.auth.getCurrentUser().role !== 'admin') {
+                    toast.error('عذراً، هذه الصفحة مخصصة للمشرفين فقط.');
+                    setTimeout(() => {
+                        window.location.href = 'index.html';
+                    }, 1500);
+                } else {
+                    loadData();
+                    lucide.createIcons();
+                }
+             }, 100);
+        });
+
+        function loadData() {
+            // Load Users
+            const users = JSON.parse(localStorage.getItem('users')) || [];
+            document.getElementById('usersCount').textContent = users.length;
+            
+            const usersTable = document.getElementById('usersTable');
+            if (users.length === 0) {
+                usersTable.innerHTML = `<tr><td colspan="8" class="px-6 py-4 text-center text-gray-500 dark:text-gray-400" data-i18n="noUsers">${appManager.t('noUsers')}</td></tr>`;
+            } else {
+                usersTable.innerHTML = users.map(user => `
+                    <tr>
+                        <td class="px-6 py-4 whitespace-nowrap text-sm text-right">
+                            <input type="checkbox" onchange="toggleUserSelect('${user.id}', this.checked)">
+                        </td>
+                        <td class="px-6 py-4 whitespace-nowrap text-sm text-right">
+                            <div class="h-8 w-8 rounded-full overflow-hidden bg-indigo-100 dark:bg-indigo-800 flex items-center justify-center">
+                                ${user.avatar ? `<img src="${user.avatar}" alt="avatar" class="h-full w-full object-cover">` : `<span class="text-xs font-semibold text-white">${(user.name||'').split(/\s+/).map(p=>p[0]).slice(0,2).join('').toUpperCase()}</span>`}
+                            </div>
+                        </td>
+                        <td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900 dark:text-white text-right">${user.name}</td>
+                        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500 dark:text-gray-400 text-right">${user.email}</td>
+                        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500 dark:text-gray-400 text-right">${user.role || 'student'}</td>
+                        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500 dark:text-gray-400 text-right">${user.id}</td>
+                        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500 dark:text-gray-400 text-right">${user.createdAt ? new Date(user.createdAt).toLocaleDateString(appManager.lang === 'ar' ? 'ar-EG' : 'en-US') : ''}</td>
+                        <td class="px-6 py-4 whitespace-nowrap text-sm text-right">
+                            <button class="px-2 py-1 text-xs bg-gray-100 dark:bg-gray-700 rounded" onclick="showUserDetails('${user.id}')">${appManager.t('view')}</button>
+                        </td>
+                    </tr>
+                `).join('');
+            }
+
+            // Load Files
+            const localFiles = JSON.parse(localStorage.getItem('files')) || [];
+            document.getElementById('filesCount').textContent = localFiles.length;
+            
+            const filesTable = document.getElementById('filesTable');
+            if (localFiles.length === 0) {
+                filesTable.innerHTML = `<tr><td colspan="5" class="px-6 py-4 text-center text-gray-500 dark:text-gray-400" data-i18n="noFiles">${appManager.t('noFiles')}</td></tr>`;
+            } else {
+                filesTable.innerHTML = localFiles.map(file => `
+                    <tr>
+                        <td class="px-6 py-4 whitespace-nowrap text-sm text-right">
+                            <input type="checkbox" onchange="toggleFileSelect('${file.id}', this.checked)">
+                        </td>
+                        <td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900 dark:text-white text-right">${file.title}</td>
+                        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500 dark:text-gray-400 text-right">${file.subject}</td>
+                        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500 dark:text-gray-400 text-right">
+                            <span class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full bg-blue-100 dark:bg-blue-900/30 text-blue-800 dark:text-blue-300">
+                                ${appManager.translateFileType(file.type)}
+                            </span>
+                        </td>
+                        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500 dark:text-gray-400 text-right">${file.size}</td>
+                        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500 dark:text-gray-400 text-right">${file.date}</td>
+                    </tr>
+                `).join('');
+            }
+
+            // Load Review Queue
+            const reviewQueue = JSON.parse(localStorage.getItem('review')) || [];
+            document.getElementById('reviewCount').textContent = reviewQueue.length;
+            const reviewTable = document.getElementById('reviewTable');
+            if (reviewQueue.length === 0) {
+                reviewTable.innerHTML = `<tr><td colspan="7" class="px-6 py-4 text-center text-gray-500 dark:text-gray-400">${appManager.t('noFiles')}</td></tr>`;
+            } else {
+                reviewTable.innerHTML = reviewQueue.map((file, idx) => `
+                    <tr>
+                        <td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900 dark:text-white text-right">${file.title}</td>
+                        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500 dark:text-gray-400 text-right">${file.subject}</td>
+                        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500 dark:text-gray-400 text-right">${appManager.translateFileType(file.type)}</td>
+                        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500 dark:text-gray-400 text-right">${file.size}</td>
+                        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500 dark:text-gray-400 text-right">${file.date}</td>
+                        <td class="px-6 py-4 whitespace-nowrap text-xs text-right">
+                            <div class="flex items-center gap-2 justify-end">
+                                <span class="px-2 inline-flex leading-5 font-semibold rounded-full ${file.scan.safe ? 'bg-emerald-100 text-emerald-800 dark:bg-emerald-900/30 dark:text-emerald-300' : 'bg-red-100 text-red-800 dark:bg-red-900/30 dark:text-red-300'}">
+                                    ${file.scan.safe ? appManager.t('pendingReview') : appManager.t('blocked')}
+                                </span>
+                                ${file.scan.safe ? '' : `<span class="text-xs text-red-600 dark:text-red-300">${file.scan.reason === 'forbidden_extension' ? appManager.t('scanForbidden') : appManager.t('scanTooLarge')}</span>`}
+                            </div>
+                        </td>
+                        <td class="px-6 py-4 whitespace-nowrap text-sm text-right">
+                            <button class="bg-indigo-600 hover:bg-indigo-700 text-white px-3 py-1 rounded mr-2" onclick="previewReview(${idx})">${appManager.t('preview')}</button>
+                            <button class="bg-emerald-600 hover:bg-emerald-700 text-white px-3 py-1 rounded mr-2" onclick="approveReview(${idx})" ${!file.scan.safe ? 'disabled' : ''} data-i18n="approve">${appManager.t('approve')}</button>
+                            <button class="bg-red-600 hover:bg-red-700 text-white px-3 py-1 rounded" onclick="rejectReview(${idx})" data-i18n="reject">${appManager.t('reject')}</button>
+                        </td>
+                    </tr>
+                `).join('');
+            }
+
+            // Load Messages
+            const msgs = JSON.parse(localStorage.getItem('messages')) || [];
+            const list = document.getElementById('messagesList');
+            if (msgs.length === 0) {
+                list.innerHTML = `<p class="text-gray-500 dark:text-gray-400">${appManager.t('noMessages')}</p>`;
+            } else {
+                list.innerHTML = msgs.map(m => `
+                    <div class="p-4 border border-gray-200 dark:border-gray-700 rounded-lg bg-gray-50 dark:bg-gray-700/30 cursor-pointer hover:bg-gray-100 dark:hover:bg-gray-700/50"
+                         onclick="showMsgAlert(${m.id})" title="عرض الرسالة">
+                        <div class="flex items-center justify-between">
+                            <div class="text-sm text-gray-600 dark:text-gray-300 mb-1">${new Date(m.date).toLocaleString(appManager.lang === 'ar' ? 'ar-EG' : 'en-US')}</div>
+                            <button class="text-xs px-2 py-1 rounded bg-blue-100 dark:bg-blue-900/30 text-blue-700 dark:text-blue-300 hover:bg-blue-200 dark:hover:bg-blue-900/50"
+                                    onclick="event.stopPropagation(); showMsgAlert(${m.id})">عرض</button>
+                        </div>
+                        <div class="text-sm font-medium text-gray-900 dark:text-white">${m.name} - ${m.email}</div>
+                        <div class="text-sm text-gray-700 dark:text-gray-300 mt-1 line-clamp-2">${m.message}</div>
+                    </div>
+                `).join('');
+            }
+        }
+
+        window.clearAllData = function() {
+            if(confirm(appManager.t('confirmClear'))) {
+                localStorage.removeItem('users');
+                localStorage.removeItem('files');
+                localStorage.removeItem('currentUser');
+                localStorage.removeItem('review');
+                localStorage.removeItem('messages');
+                toast.success(appManager.t('success'));
+                location.reload();
+            }
+        }
+
+        window.approveReview = function(idx) {
+            const reviewQueue = JSON.parse(localStorage.getItem('review')) || [];
+            const files = JSON.parse(localStorage.getItem('files')) || [];
+            const item = reviewQueue.splice(idx, 1)[0];
+            const exists = files.findIndex(f => String(f.id) === String(item.id)) !== -1;
+            if (!exists) files.unshift(item);
+            localStorage.setItem('files', JSON.stringify(files));
+            localStorage.setItem('review', JSON.stringify(reviewQueue));
+            loadData();
+        }
+
+        window.rejectReview = async function(idx) {
+            const reviewQueue = JSON.parse(localStorage.getItem('review')) || [];
+            const item = reviewQueue[idx];
+            // attempt to remove blob from IndexedDB if present
+            try { await removeFileBlob(item.id); } catch(e) { /* ignore */ }
+            reviewQueue.splice(idx, 1);
+            localStorage.setItem('review', JSON.stringify(reviewQueue));
+            loadData();
+        }
+
+        // Fetch blob by id from IndexedDB 'summarizee' -> 'files'
+        async function fetchBlobById(id) {
+            return new Promise((resolve, reject) => {
+                try {
+                    const req = indexedDB.open('summarizee', 1);
+                    req.onsuccess = () => {
+                        const db = req.result;
+                        const tx = db.transaction('files', 'readonly');
+                        const store = tx.objectStore('files');
+                        const g = store.get(Number(id));
+                        g.onsuccess = () => resolve(g.result || null);
+                        g.onerror = () => resolve(null);
+                    };
+                    req.onerror = () => resolve(null);
+                } catch(e) { resolve(null); }
+            });
+        }
+
+        window.previewReview = async function(idx) {
+            const reviewQueue = JSON.parse(localStorage.getItem('review')) || [];
+            const item = reviewQueue[idx];
+            const modal = document.createElement('div');
+            modal.className = 'fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4';
+            modal.innerHTML = `
+                <div class="bg-white dark:bg-gray-800 rounded-2xl shadow-2xl max-w-4xl w-full p-4">
+                    <div class="flex justify-between items-start mb-4">
+                        <h2 class="text-lg font-bold text-gray-900 dark:text-white">${appManager.t('filePreview')}</h2>
+                        <button id="adminPreviewClose" class="text-gray-500 hover:text-gray-700 dark:text-gray-400">
+                            <i data-lucide="x" class="h-6 w-6"></i>
+                        </button>
+                    </div>
+                    <div id="adminPreviewBody" class="min-h-[120px] max-h-[70vh] overflow-auto p-2 bg-gray-50 dark:bg-gray-700 rounded"></div>
+                    <div class="mt-4 flex justify-end gap-2">
+                        <a id="adminPreviewDownload" class="hidden inline-flex items-center px-4 py-2 bg-gray-100 rounded text-sm text-gray-700" download>${appManager.t('downloadFile')}</a>
+                        <button onclick="document.body.querySelector('.fixed.inset-0').remove()" class="px-4 py-2 bg-blue-600 text-white rounded">${appManager.t('close')}</button>
+                    </div>
+                </div>
+            `;
+            document.body.appendChild(modal);
+            if (typeof lucide !== 'undefined') lucide.createIcons();
+            // close icon handler
+            modal.querySelector('#adminPreviewClose').addEventListener('click', () => modal.remove());
+
+            const body = modal.querySelector('#adminPreviewBody');
+            const downloadLink = modal.querySelector('#adminPreviewDownload');
+            body.textContent = appManager.t('loading');
+
+            // size limit for inline preview
+            const SIZE_LIMIT = 5 * 1024 * 1024; // 5MB
+            const found = await fetchBlobById(item.id);
+            if (!found) {
+                body.textContent = appManager.t('fileNotFound');
+                return;
+            }
+
+            const blob = found.blob || found;
+            if (!blob) { body.textContent = appManager.t('noAttachment'); return; }
+            if (blob.size > SIZE_LIMIT) {
+                body.innerHTML = `<div class="p-4">${appManager.t('fileSizeExceeded')} (${(SIZE_LIMIT/1024/1024).toFixed(0)}MB). ${appManager.lang === 'ar' ? 'يمكنك تحميل الملف لمراجعته.' : 'You can download the file for review.'}</div>`;
+                const url = URL.createObjectURL(blob);
+                downloadLink.href = url; downloadLink.classList.remove('hidden'); downloadLink.textContent = appManager.t('downloadFile');
+                return;
+            }
+
+            const mime = blob.type || item.type || '';
+            try {
+                if (mime.startsWith('text/') || mime === 'application/json') {
+                    const txt = await blob.text();
+                    const pre = document.createElement('pre');
+                    pre.className = 'whitespace-pre-wrap text-sm text-gray-800 dark:text-gray-100';
+                    pre.textContent = txt;
+                    body.innerHTML = '';
+                    body.appendChild(pre);
+                } else if (mime.startsWith('image/')) {
+                    const url = URL.createObjectURL(blob);
+                    const img = document.createElement('img');
+                    img.src = url; img.alt = item.title || 'image';
+                    img.className = 'max-w-full h-auto rounded';
+                    body.innerHTML = '';
+                    body.appendChild(img);
+                    downloadLink.href = url; downloadLink.classList.remove('hidden'); downloadLink.textContent = appManager.t('downloadImage');
+                } else if (mime === 'application/pdf') {
+                    const url = URL.createObjectURL(blob);
+                    body.innerHTML = `<object data="${url}" type="application/pdf" width="100%" height="600">PDF preview not supported. <a href="${url}">${appManager.t('downloadPdf')}</a></object>`;
+                    downloadLink.href = url; downloadLink.classList.remove('hidden'); downloadLink.textContent = appManager.t('downloadPdf');
+                } else {
+                    const url = URL.createObjectURL(blob);
+                    body.innerHTML = `<div class="p-4">${appManager.lang === 'ar' ? 'نوع الملف:' : 'File type:'} <strong>${mime || appManager.t('unknown')}</strong></div>`;
+                    downloadLink.href = url; downloadLink.classList.remove('hidden'); downloadLink.textContent = appManager.t('downloadFile');
+                }
+            } catch (e) {
+                body.textContent = appManager.lang === 'ar' ? 'حدث خطأ أثناء تحميل الملف.' : 'Error loading file.';
+            }
+        }
+
+        // إدارة التحديد والحذف/التعديل
+        const userSelected = new Set();
+        const fileSelected = new Set();
+
+        window.toggleUserSelect = function(id, checked) {
+            if (checked) userSelected.add(id); else userSelected.delete(id);
+        }
+        window.toggleUsersSelectAll = function(checked) {
+            const users = JSON.parse(localStorage.getItem('users')) || [];
+            userSelected.clear();
+            if (checked) users.forEach(u => userSelected.add(String(u.id)));
+            document.querySelectorAll('#usersTable input[type="checkbox"]').forEach(cb => cb.checked = checked);
+        }
+        window.deleteSelectedUsers = function() {
+            const users = JSON.parse(localStorage.getItem('users')) || [];
+            const current = JSON.parse(localStorage.getItem('currentUser')) || null;
+            const filtered = users.filter(u => !userSelected.has(String(u.id)));
+            localStorage.setItem('users', JSON.stringify(filtered));
+            if (current && userSelected.has(String(current.id))) {
+                localStorage.removeItem('currentUser');
+            }
+            userSelected.clear();
+            loadData();
+        }
+        window.editSelectedUser = function() {
+            if (userSelected.size !== 1) { toast.error(appManager.t('chooseOne')); return; }
+            const id = Array.from(userSelected)[0];
+            const users = JSON.parse(localStorage.getItem('users')) || [];
+            const idx = users.findIndex(u => String(u.id) === String(id));
+            if (idx === -1) return;
+            const u = users[idx];
+            const name = prompt(appManager.t('fullName'), u.name);
+            if (name === null) return;
+            const email = prompt(appManager.t('email'), u.email);
+            if (email === null) return;
+            const role = prompt('role (admin/student)', u.role);
+            if (role === null) return;
+            users[idx] = { ...u, name, email, role };
+            localStorage.setItem('users', JSON.stringify(users));
+            const current = JSON.parse(localStorage.getItem('currentUser')) || null;
+            if (current && String(current.id) === String(id)) {
+                localStorage.setItem('currentUser', JSON.stringify({ ...current, name, email, role }));
+            }
+            toast.success(appManager.t('userEdited'));
+            userSelected.clear();
+            loadData();
+        }
+
+        window.toggleFileSelect = function(id, checked) {
+            if (checked) fileSelected.add(id); else fileSelected.delete(id);
+        }
+        window.toggleFilesSelectAll = function(checked) {
+            const files = JSON.parse(localStorage.getItem('files')) || [];
+            fileSelected.clear();
+            if (checked) files.forEach(f => fileSelected.add(String(f.id)));
+            document.querySelectorAll('#filesTable input[type="checkbox"]').forEach(cb => cb.checked = checked);
+        }
+        async function removeFileBlob(id) {
+            try {
+                const req = indexedDB.open('summarizee', 1);
+                await new Promise((resolve, reject) => {
+                    req.onsuccess = () => {
+                        const db = req.result;
+                        const tx = db.transaction('files', 'readwrite');
+                        tx.objectStore('files').delete(Number(id));
+                        tx.oncomplete = resolve;
+                        tx.onerror = reject;
+                    };
+                    req.onerror = reject;
+                });
+            } catch(e) { /* ignore */ }
+        }
+        window.deleteSelectedFiles = async function() {
+            const files = JSON.parse(localStorage.getItem('files')) || [];
+            const keep = files.filter(f => !fileSelected.has(String(f.id)));
+            const removed = files.filter(f => fileSelected.has(String(f.id)));
+            localStorage.setItem('files', JSON.stringify(keep));
+            for (const f of removed) { await removeFileBlob(f.id); }
+            fileSelected.clear();
+            loadData();
+        }
+        window.editSelectedFile = function() {
+            if (fileSelected.size !== 1) { toast.error(appManager.t('chooseOne')); return; }
+            const id = Array.from(fileSelected)[0];
+            const files = JSON.parse(localStorage.getItem('files')) || [];
+            const idx = files.findIndex(f => String(f.id) === String(id));
+            if (idx === -1) return;
+            const f = files[idx];
+            const title = prompt(appManager.t('fileTitle'), f.title);
+            if (title === null) return;
+            const subject = prompt(appManager.t('subject'), f.subject);
+            if (subject === null) return;
+            const type = prompt(appManager.t('fileType'), f.type);
+            if (type === null) return;
+            files[idx] = { ...f, title, subject, type };
+            localStorage.setItem('files', JSON.stringify(files));
+            toast.success(appManager.t('fileEdited'));
+            fileSelected.clear();
+            loadData();
+        }
+        window.showMsgAlert = function(id) {
+            const msgs = JSON.parse(localStorage.getItem('messages')) || [];
+            const m = msgs.find(x => String(x.id) === String(id));
+            if (!m) { toast.error(appManager.t('noMessages')); return; }
+            // عرض رسالة المستخدم في modal بدل alert
+            const modal = document.createElement('div');
+            modal.className = 'fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4';
+            modal.innerHTML = `
+                <div class="bg-white dark:bg-gray-800 rounded-2xl shadow-2xl max-w-md w-full p-6">
+                    <div class="flex justify-between items-start mb-4">
+                        <h2 class="text-xl font-bold text-gray-900 dark:text-white">الرسالة</h2>
+                        <button onclick="this.closest('.fixed').remove()" class="text-gray-500 hover:text-gray-700 dark:text-gray-400">
+                            <i data-lucide="x" class="h-6 w-6"></i>
+                        </button>
+                    </div>
+                    <div class="space-y-3 mb-4">
+                        <p class="text-sm"><span class="font-semibold text-gray-700 dark:text-gray-300">الاسم:</span> <span class="text-gray-600 dark:text-gray-400">${m.name}</span></p>
+                        <p class="text-sm"><span class="font-semibold text-gray-700 dark:text-gray-300">البريد:</span> <span class="text-gray-600 dark:text-gray-400">${m.email}</span></p>
+                        <div class="bg-gray-50 dark:bg-gray-700 p-3 rounded-lg">
+                            <p class="text-sm text-gray-700 dark:text-gray-300">${m.message}</p>
+                        </div>
+                    </div>
+                    <button onclick="this.closest('.fixed').remove()" class="w-full bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 transition">
+                        إغلاق
+                    </button>
+                </div>
+            `;
+            document.body.appendChild(modal);
+            if (typeof lucide !== 'undefined') lucide.createIcons();
+        }
+
+        window.showUserDetails = function(id) {
+            const users = JSON.parse(localStorage.getItem('users')) || [];
+            const u = users.find(x => String(x.id) === String(id));
+            if (!u) { toast.error(appManager.t('userNotFound')); return; }
+            const modal = document.createElement('div');
+            modal.className = 'fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4';
+            
+            // Format user details nicely
+            const detailsHtml = `
+                <div class="space-y-2 text-sm">
+                    <div class="border-b border-gray-200 dark:border-gray-600 pb-2">
+                        <span class="font-semibold text-gray-700 dark:text-gray-300">${appManager.lang === 'ar' ? 'الاسم:' : 'Name:'}</span>
+                        <span class="text-gray-900 dark:text-white ml-2">${u.name || '-'}</span>
+                    </div>
+                    <div class="border-b border-gray-200 dark:border-gray-600 pb-2">
+                        <span class="font-semibold text-gray-700 dark:text-gray-300">${appManager.lang === 'ar' ? 'البريد:' : 'Email:'}</span>
+                        <span class="text-gray-900 dark:text-white ml-2 break-all">${u.email || '-'}</span>
+                    </div>
+                    <div class="border-b border-gray-200 dark:border-gray-600 pb-2">
+                        <span class="font-semibold text-gray-700 dark:text-gray-300">${appManager.lang === 'ar' ? 'الدور:' : 'Role:'}</span>
+                        <span class="text-gray-900 dark:text-white ml-2">${u.role || 'student'}</span>
+                    </div>
+                    <div class="border-b border-gray-200 dark:border-gray-600 pb-2">
+                        <span class="font-semibold text-gray-700 dark:text-gray-300">${appManager.lang === 'ar' ? 'المعرف:' : 'ID:'}</span>
+                        <span class="text-gray-900 dark:text-white ml-2 font-mono text-xs break-all">${u.id || '-'}</span>
+                    </div>
+                    <div>
+                        <span class="font-semibold text-gray-700 dark:text-gray-300">${appManager.lang === 'ar' ? 'تاريخ الإنشاء:' : 'Created:'}</span>
+                        <span class="text-gray-900 dark:text-white ml-2">${u.createdAt ? new Date(u.createdAt).toLocaleDateString(appManager.lang === 'ar' ? 'ar-EG' : 'en-US') : '-'}</span>
+                    </div>
+                </div>
+            `;
+            
+            modal.innerHTML = `
+                <div class="bg-white dark:bg-gray-800 rounded-2xl shadow-2xl max-w-md w-full p-6 max-h-[90vh] overflow-y-auto">
+                    <div class="flex justify-between items-start mb-4">
+                        <h2 class="text-xl font-bold text-gray-900 dark:text-white">${appManager.t('userDetails')}</h2>
+                        <button onclick="this.closest('.fixed').remove()" class="text-gray-500 hover:text-gray-700 dark:text-gray-400 flex-shrink-0">
+                            <i data-lucide="x" class="h-6 w-6"></i>
+                        </button>
+                    </div>
+                    <div class="mb-4">
+                        <div class="flex items-center gap-3 mb-4 pb-4 border-b border-gray-200 dark:border-gray-600">
+                            <div class="h-16 w-16 rounded-full overflow-hidden bg-indigo-100 dark:bg-indigo-800 flex items-center justify-center flex-shrink-0">
+                                ${u.avatar ? `<img src="${u.avatar}" alt="avatar" class="h-full w-full object-cover">` : `<span class="text-lg font-semibold text-white">${(u.name||'').split(/\s+/).map(p=>p[0]).slice(0,2).join('').toUpperCase()}</span>`}
+                            </div>
+                            <div class="flex-1">
+                                <div class="text-sm font-medium text-gray-900 dark:text-white">${u.name}</div>
+                                <div class="text-xs text-gray-500 dark:text-gray-400 break-all">${u.email}</div>
+                            </div>
+                        </div>
+                        <div class="bg-gray-50 dark:bg-gray-700 p-3 rounded-lg">
+                            ${detailsHtml}
+                        </div>
+                    </div>
+                    <div class="flex justify-end">
+                        <button onclick="this.closest('.fixed').remove()" class="px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700 transition">${appManager.t('close')}</button>
+                    </div>
+                </div>
+            `;
+            document.body.appendChild(modal);
+            if (typeof lucide !== 'undefined') lucide.createIcons();
+        }
+    </script>
+</body>
+</html>

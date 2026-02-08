@@ -1,0 +1,93 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title data-i18n="contactTitle">تواصل مع المسؤول</title>
+    <link rel="icon" type="image/png" href="duckk.jpg">
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://unpkg.com/lucide@latest"></script>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Cairo:wght@300;400;600;700&display=swap');
+        body { font-family: 'Cairo', sans-serif; }
+        .animate-fade-in-up { animation: fadeInUp 300ms ease-out both; }
+        @keyframes fadeInUp { 0% { opacity:0; transform: translateY(8px);} 100% { opacity:1; transform: translateY(0);} }
+    </style>
+    <script>
+        tailwind.config = { darkMode: 'class' }
+    </script>
+</head>
+<body class="bg-slate-50 dark:bg-slate-900 min-h-screen flex flex-col transition-colors duration-200">
+    <!-- Toast Notification System -->
+    <script src="toast.js"></script>
+    <!-- App -->
+    <script src="app.js"></script>
+    <nav class="bg-white dark:bg-gray-900 shadow-sm sticky top-0 z-50 border-b border-gray-100 dark:border-gray-800 transition-colors duration-200">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="flex justify-between h-16 items-center">
+                <div class="flex items-center">
+                    <a href="index.html" class="flex items-center gap-2 text-2xl font-bold text-gray-900 dark:text-white" data-i18n="siteName">
+                        <i data-lucide="messages-square" class="h-8 w-8 text-blue-600 ml-2"></i>
+                        <span>Summarize</span>
+                    </a>
+                </div>
+                <div class="flex items-center gap-2 sm:gap-4">
+                    <button onclick="appManager.toggleTheme()" class="p-2 rounded-full hover:bg-gray-100 dark:hover:bg-gray-800 text-gray-600 dark:text-gray-300 transition" aria-label="Toggle Theme">
+                        <i data-lucide="moon" class="h-5 w-5 hidden dark:block"></i>
+                        <i data-lucide="sun" class="h-5 w-5 block dark:hidden"></i>
+                    </button>
+                    <button onclick="appManager.toggleLanguage()" class="p-2 rounded-full hover:bg-gray-100 dark:hover:bg-gray-800 text-gray-600 dark:text-gray-300 transition" aria-label="Toggle Language">
+                        <i data-lucide="languages" class="h-5 w-5"></i>
+                    </button>
+                </div>
+            </div>
+        </div>
+    </nav>
+
+    <div class="flex-grow flex items-center justify-center py-12 px-4 sm:px-6 lg:px-8">
+        <div class="max-w-lg w-full space-y-6 bg-white dark:bg-gray-800 p-8 rounded-2xl shadow-sm border border-gray-100 dark:border-gray-700 transition-colors duration-200 animate-fade-in-up">
+            <h2 class="text-3xl font-extrabold text-gray-900 dark:text-white text-center" data-i18n="contactTitle">تواصل مع المسؤول</h2>
+            <form id="contactForm" class="space-y-4">
+                <div>
+                    <label class="block text-sm text-gray-600 dark:text-gray-400 mb-1" data-i18n="fullName">الاسم الكامل</label>
+                    <input id="c-name" class="w-full rounded-lg border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-white px-3 py-3" placeholder="" data-i18n="fullName" required>
+                </div>
+                <div>
+                    <label class="block text-sm text-gray-600 dark:text-gray-400 mb-1" data-i18n="email">البريد الإلكتروني</label>
+                    <input id="c-email" type="email" class="w-full rounded-lg border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-white px-3 py-3" placeholder="" data-i18n="email" required>
+                </div>
+                <div>
+                    <label class="block text-sm text-gray-600 dark:text-gray-400 mb-1" data-i18n="message">رسالتك</label>
+                    <textarea id="c-message" rows="5" class="w-full rounded-lg border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-white px-3 py-3"></textarea>
+                </div>
+                <button type="submit" class="w-full bg-blue-600 hover:bg-blue-700 text-white px-4 py-3 rounded-xl transition font-medium" data-i18n="sendMessage">إرسال</button>
+            </form>
+        </div>
+    </div>
+
+    <script type="module" src="app.js"></script>
+    <script>
+        window.addEventListener('load', () => {
+            lucide.createIcons();
+        });
+        document.getElementById('contactForm').addEventListener('submit', (e) => {
+            e.preventDefault();
+            const name = document.getElementById('c-name').value.trim();
+            const email = document.getElementById('c-email').value.trim();
+            const message = document.getElementById('c-message').value;
+            if (!name) { toast.error(appManager.t('nameRequired')); return; }
+            if (!email) { toast.error(appManager.t('emailRequired')); return; }
+            const emailOk = /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email);
+            if (!emailOk) { toast.error(appManager.t('invalidEmail')); return; }
+            const entry = { id: Date.now(), name, email, message, date: new Date().toISOString() };
+            const msgs = JSON.parse(localStorage.getItem('messages')) || [];
+            msgs.unshift(entry);
+            localStorage.setItem('messages', JSON.stringify(msgs));
+            toast.success(appManager.t('messageSent'));
+            setTimeout(() => {
+                window.location.href = 'index.html';
+            }, 1500);
+        });
+    </script>
+</body>
+</html>

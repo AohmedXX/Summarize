@@ -1,0 +1,172 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>استعادة كلمة المرور</title>
+    <link rel="icon" type="image/png" href="duckk.jpg">
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://unpkg.com/lucide@latest"></script>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Cairo:wght@300;400;600;700&display=swap');
+        body { font-family: 'Cairo', sans-serif; }
+        .animate-fade-in-up { animation: fadeInUp 300ms ease-out both; }
+        @keyframes fadeInUp { 0% { opacity:0; transform: translateY(8px);} 100% { opacity:1; transform: translateY(0);} }
+    </style>
+</head>
+<body class="bg-slate-50 dark:bg-slate-900 min-h-screen flex flex-col transition-colors duration-200">
+    <script src="toast.js"></script>
+    <!-- App -->
+    <script src="app.js"></script>
+
+    <nav class="bg-white dark:bg-gray-900 shadow-sm sticky top-0 z-50 border-b border-gray-100 dark:border-gray-800 transition-colors duration-200">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="flex justify-between h-16 items-center">
+                <div class="flex items-center">
+                    <a href="index.html" class="flex items-center gap-2 text-2xl font-bold text-gray-900 dark:text-white">
+                        <i data-lucide="key-round" class="h-8 w-8 text-blue-600 ml-2"></i>
+                        <span>Summarize</span>
+                    </a>
+                </div>
+                <div class="flex items-center gap-2">
+                    <button onclick="appManager.toggleTheme()" class="p-2 rounded-full hover:bg-gray-100 dark:hover:bg-gray-800 text-gray-600 dark:text-gray-300 transition" aria-label="Toggle Theme">
+                        <i data-lucide="moon" class="h-5 w-5 hidden dark:block"></i>
+                        <i data-lucide="sun" class="h-5 w-5 block dark:hidden"></i>
+                    </button>
+                    <button onclick="appManager.toggleLanguage()" class="p-2 rounded-full hover:bg-gray-100 dark:hover:bg-gray-800 text-gray-600 dark:text-gray-300 transition" aria-label="Toggle Language">
+                        <i data-lucide="languages" class="h-5 w-5"></i>
+                    </button>
+                </div>
+            </div>
+        </div>
+    </nav>
+
+    <div class="flex-grow flex items-center justify-center py-12 px-4 sm:px-6 lg:px-8">
+        <div class="max-w-md w-full space-y-8 bg-white dark:bg-gray-800 p-8 rounded-2xl shadow-sm border border-gray-100 dark:border-gray-700 transition-colors duration-200 animate-fade-in-up">
+            <h2 class="text-center text-3xl font-extrabold text-gray-900 dark:text-white">استعادة كلمة المرور</h2>
+
+            <div id="stepEmail" class="space-y-4">
+                <label class="block text-sm text-gray-600 dark:text-gray-400 mb-1">أدخل بريدك الإلكتروني</label>
+                <input id="resetEmail" type="email" class="w-full px-3 py-2 rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-white" placeholder="email@example.com">
+                <button id="sendCodeBtn" class="mt-2 w-full bg-blue-600 hover:bg-blue-700 text-white py-2 rounded-lg">إرسال الكود</button>
+            </div>
+
+            <div id="stepCode" class="space-y-4 hidden">
+                <label class="block text-sm text-gray-600 dark:text-gray-400 mb-1">أدخل الكود</label>
+                <input id="resetCode" type="text" class="w-full px-3 py-2 rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-white" placeholder="123456">
+                <button id="verifyCodeBtn" class="mt-2 w-full bg-indigo-600 hover:bg-indigo-700 text-white py-2 rounded-lg">تحقق من الكود</button>
+            </div>
+
+            <div id="stepNewPass" class="space-y-4 hidden">
+                <label class="block text-sm text-gray-600 dark:text-gray-400 mb-1">كلمة المرور الجديدة</label>
+                <input id="newPass" type="password" class="w-full px-3 py-2 rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-white">
+                <label class="block text-sm text-gray-600 dark:text-gray-400 mb-1">تأكيد كلمة المرور</label>
+                <input id="newPass2" type="password" class="w-full px-3 py-2 rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-white">
+                <button id="savePassBtn" class="mt-2 w-full bg-emerald-600 hover:bg-emerald-700 text-white py-2 rounded-lg">حفظ</button>
+            </div>
+
+            <div id="resetMsg" class="text-sm text-center font-medium"></div>
+            <a href="login.html" class="block text-center text-blue-600 dark:text-blue-400">العودة لتسجيل الدخول</a>
+        </div>
+    </div>
+
+    <script type="module" src="app.js"></script>
+    <script>
+        let resetToken = null;
+        window.addEventListener('load', () => { if (typeof lucide !== 'undefined') lucide.createIcons(); });
+        
+        const stepEmail = document.getElementById('stepEmail');
+        const stepCode = document.getElementById('stepCode');
+        const stepNewPass = document.getElementById('stepNewPass');
+        const msgEl = document.getElementById('resetMsg');
+
+        // الخطوة 1: إرسال الكود
+        document.getElementById('sendCodeBtn').addEventListener('click', async () => {
+            const email = (document.getElementById('resetEmail').value || '').trim().toLowerCase();
+            if (!email) { msgEl.textContent = 'البريد الإلكتروني مطلوب'; msgEl.className="text-red-500 text-sm text-center"; return; }
+            msgEl.textContent = 'جاري الإرسال...';
+            msgEl.className="text-blue-500 text-sm text-center";
+            try {
+                const res = await fetch('backend/send_reset_code.php', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ email: email })
+                });
+                const data = await res.json();
+                if (data.success) {
+                    msgEl.textContent = 'تم إرسال الكود إلى بريدك';
+                    msgEl.className="text-green-500 text-sm text-center";
+                    stepEmail.classList.add('hidden');
+                    stepCode.classList.remove('hidden');
+                } else {
+                    msgEl.textContent = data.message || 'تعذر الإرسال';
+                    msgEl.className="text-red-500 text-sm text-center";
+                }
+            } catch (e) {
+                msgEl.textContent = 'تعذر الإرسال';
+                msgEl.className="text-red-500 text-sm text-center";
+            }
+        });
+
+        // الخطوة 2: التحقق من الكود
+        document.getElementById('verifyCodeBtn').addEventListener('click', async () => {
+            const email = (document.getElementById('resetEmail').value || '').trim().toLowerCase();
+            const code = (document.getElementById('resetCode').value || '').trim();
+            if (!code) { msgEl.textContent = 'أدخل الكود'; return; }
+            try {
+                const res = await fetch('backend/verify_code.php', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ email, code })
+                });
+                const data = await res.json();
+                if (data.success) {
+                    resetToken = data.reset_token;
+                    msgEl.textContent = '';
+                    stepCode.classList.add('hidden');
+                    stepNewPass.classList.remove('hidden');
+                } else {
+                    msgEl.textContent = data.message || 'الكود غير صحيح';
+                    msgEl.className="text-red-500 text-sm text-center";
+                }
+            } catch (e) {
+                msgEl.textContent = 'خطأ في التحقق';
+            }
+        });
+
+        // الخطوة 3: حفظ كلمة المرور الجديدة
+        document.getElementById('savePassBtn').addEventListener('click', async () => {
+            const email = document.getElementById('resetEmail').value.trim().toLowerCase();
+            const p1 = document.getElementById('newPass').value;
+            const p2 = document.getElementById('newPass2').value;
+
+            if (!p1 || p1.length < 6) { msgEl.textContent = 'ضع كلمة مرور أقوى (6 خانات على الأقل)'; msgEl.className="text-red-500 text-sm text-center"; return; }
+            if (p1 !== p2) { msgEl.textContent = 'كلمتا المرور غير متطابقتين'; msgEl.className="text-red-500 text-sm text-center"; return; }
+            if (!resetToken) { msgEl.textContent = 'طلب غير صالح'; return; }
+
+            try {
+                const res = await fetch('backend/reset_password.php', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ email, reset_token: resetToken, new_password: p1 })
+                });
+
+                const data = await res.json();
+
+                if (data.success) {
+                    msgEl.innerHTML = '<span class="text-emerald-600 font-bold">تم تحديث كلمة المرور بنجاح! جاري تحويلك...</span>';
+                    setTimeout(() => {
+                        window.location.href = 'login.html';
+                    }, 2500);
+                } else {
+                    msgEl.textContent = data.message || 'تعذر التحديث';
+                    msgEl.className="text-red-500 text-sm text-center";
+                }
+            } catch (e) {
+                msgEl.textContent = 'تعذر التحديث - خطأ في الاتصال';
+                msgEl.className="text-red-500 text-sm text-center";
+            }
+        });
+    </script>
+</body>
+</html>

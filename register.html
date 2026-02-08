@@ -1,0 +1,163 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>إنشاء حساب - Summarize</title>
+    <link rel="icon" type="image/png" href="duckk.jpg">
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://unpkg.com/lucide@latest"></script>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Cairo:wght@300;400;600;700&display=swap');
+        body { font-family: 'Cairo', sans-serif; }
+        .animate-fade-in-up { animation: fadeInUp 300ms ease-out both; }
+        @keyframes fadeInUp { 0% { opacity:0; transform: translateY(8px);} 100% { opacity:1; transform: translateY(0);} }
+    </style>
+</head>
+<body class="bg-slate-50 dark:bg-slate-900 min-h-screen flex flex-col transition-colors duration-200">
+    <!-- Toast Notification System -->
+    <script src="toast.js"></script>
+    <!-- App -->
+    <script src="app.js"></script>
+
+    <nav class="bg-white dark:bg-gray-900 shadow-sm sticky top-0 z-50 border-b border-gray-100 dark:border-gray-800 transition-colors duration-200">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="flex justify-between h-16 items-center">
+                <div class="flex items-center">
+                    <a href="index.html" class="flex items-center gap-2 text-2xl font-bold text-gray-900 dark:text-white">
+                        <i data-lucide="book-open" class="h-8 w-8 text-blue-600 ml-2"></i>
+                        <span>Summarize</span>
+                    </a>
+                </div>
+                <div class="flex items-center gap-2 border-r border-gray-200 dark:border-gray-700 pr-4">
+                    <button onclick="appManager.toggleTheme()" class="p-2 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-800 text-gray-600 dark:text-gray-300">
+                        <i data-lucide="moon" class="w-5 h-5 hidden dark:block"></i>
+                        <i data-lucide="sun" class="w-5 h-5 block dark:hidden"></i>
+                    </button>
+                    <button onclick="appManager.toggleLanguage()" class="p-2 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-800 text-gray-600 dark:text-gray-300">
+                        <i data-lucide="languages" class="w-5 h-5"></i>
+                    </button>
+                </div>
+            </div>
+        </div>
+    </nav>
+
+    <div class="flex-grow flex items-center justify-center py-12 px-4 sm:px-6 lg:px-8">
+        <div class="max-w-md w-full space-y-8 bg-white dark:bg-gray-800 p-8 rounded-2xl shadow-sm border border-gray-100 dark:border-gray-700 animate-fade-in-up">
+            <div>
+                <h2 class="mt-6 text-center text-3xl font-extrabold text-gray-900 dark:text-white" data-i18n="registerTitle"></h2>
+                <p class="mt-2 text-center text-sm text-gray-600 dark:text-gray-400">
+                    <span data-i18n="haveAccount"></span> <a href="login.html" class="font-medium text-blue-600 dark:text-blue-400 hover:text-blue-500" data-i18n="loginLink"></a>
+                </p>
+            </div>
+            <form class="mt-8 space-y-6" id="registerForm">
+                <div class="rounded-md shadow-sm space-y-4">
+                    <input id="name" name="name" type="text" required class="appearance-none rounded-lg relative block w-full px-3 py-3 border border-gray-300 dark:border-gray-600 text-gray-900 dark:text-white bg-white dark:bg-gray-700 focus:ring-blue-500 focus:border-blue-500 sm:text-sm" data-i18n="fullName">
+                    <input id="email" name="email" type="email" required class="appearance-none rounded-lg relative block w-full px-3 py-3 border border-gray-300 dark:border-gray-600 text-gray-900 dark:text-white bg-white dark:bg-gray-700 focus:ring-blue-500 focus:border-blue-500 sm:text-sm" data-i18n="email">
+                    <input id="password" name="password" type="password" required class="appearance-none rounded-lg relative block w-full px-3 py-3 border border-gray-300 dark:border-gray-600 text-gray-900 dark:text-white bg-white dark:bg-gray-700 focus:ring-blue-500 focus:border-blue-500 sm:text-sm" data-i18n="password">
+                    <input id="confirm-password" name="confirm-password" type="password" required class="appearance-none rounded-lg relative block w-full px-3 py-3 border border-gray-300 dark:border-gray-600 text-gray-900 dark:text-white bg-white dark:bg-gray-700 focus:ring-blue-500 focus:border-blue-500 sm:text-sm" data-i18n="confirmPassword">
+                </div>
+
+                <button type="submit" class="w-full flex justify-center py-3 px-4 border border-transparent text-sm font-medium rounded-xl text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 transition" data-i18n="register"></button>
+            </form>
+        </div>
+    </div>
+
+    <script>
+window.addEventListener('load', () => {
+    lucide.createIcons();
+    updateRegisterPageLanguage();
+});
+
+function updateRegisterPageLanguage() {
+    const lang = appManager.lang || 'ar';
+    document.getElementById('name').placeholder = appManager.t('fullName');
+    document.getElementById('email').placeholder = appManager.t('email');
+    document.getElementById('password').placeholder = appManager.t('password');
+    document.getElementById('confirm-password').placeholder = appManager.t('confirmPassword');
+}
+
+// Listen for language changes
+document.addEventListener('appLanguageChanged', updateRegisterPageLanguage);
+
+document.getElementById('registerForm').addEventListener('submit', (e) => {
+    e.preventDefault();
+    
+    // جلب البيانات من الفورم بتاعتك بنفس الـ IDs
+    const name = document.getElementById('name').value;
+    const email = document.getElementById('email').value.trim().toLowerCase();
+    const password = document.getElementById('password').value;
+    const confirmPassword = document.getElementById('confirm-password').value;
+
+    // Rate limiting - prevent brute force
+    if (!security.checkRateLimit('register_' + email, 3, 60000)) {
+        toast.error(appManager.lang === 'ar' ? 'حاولت عدة مرات. حاول لاحقاً.' : 'Too many attempts. Try again later.');
+        return;
+    }
+
+    // Validate name
+    if (!security.validateUsername(name)) {
+        toast.error(appManager.lang === 'ar' ? 'الاسم يجب أن يكون حروفاً وأرقاماً فقط (الحد الأدنى حرفين)' : 'Name must be letters and spaces (min 2 chars)');
+        return;
+    }
+
+    // Validate email
+    if (!security.validateEmail(email)) {
+        toast.error(appManager.lang === 'ar' ? 'البريد الإلكتروني غير صحيح' : 'Invalid email format');
+        return;
+    }
+
+    // Check for XSS in inputs
+    if (security.hasXSSPatterns(name) || security.hasXSSPatterns(email)) {
+        toast.error(security.createSecureError(appManager.lang === 'ar' ? 'محتوى غير آمن' : 'Invalid input'));
+        return;
+    }
+
+    // Validate passwords match
+    if (password !== confirmPassword) {
+        toast.error(appManager.lang === 'ar' ? 'كلمات المرور غير متطابقة' : 'Passwords do not match');
+        return;
+    }
+
+    // Validate password strength
+    const pwdValidation = security.validatePassword(password);
+    if (!pwdValidation.valid) {
+        toast.error(appManager.lang === 'ar' ? 'كلمة المرور: 6 أحرف على الأقل، حرف واحد ورقم واحد' : 'Password: Min 6 chars, 1 letter, 1 number');
+        return;
+    }
+
+    // Sanitize inputs
+    const cleanName = security.sanitizeInput(name);
+    const cleanEmail = security.sanitizeInput(email);
+
+    // التبديل من PHP إلى LocalStorage مع الحفاظ على ملفاتك
+    try {
+        let users = JSON.parse(localStorage.getItem('users') || '[]');
+        if (users.find(u => u.email === cleanEmail)) {
+            toast.error(appManager.lang === 'ar' ? 'هذا البريد مسجل بالفعل!' : 'Email already registered');
+            return;
+        }
+
+        // Secure password - note: never store plain passwords in production
+        // Here it's only client-side demo; use bcrypt/hashing in real backend
+        users.push({ 
+            id: 'user_' + Date.now(),
+            name: cleanName, 
+            email: cleanEmail,
+            password: password, // ⚠️ Client-side only; use server-side hashing in production
+            role: 'student',
+            createdAt: new Date().toISOString()
+        });
+        localStorage.setItem('users', JSON.stringify(users));
+
+        toast.success(appManager.lang === 'ar' ? 'تم إنشاء الحساب بنجاح!' : 'Account created successfully!');
+        setTimeout(() => {
+            window.location.href = 'login.html';
+        }, 1500);
+    } catch (error) {
+        toast.error(security.createSecureError(appManager.lang === 'ar' ? 'حدث خطأ' : 'An error occurred'));
+    }
+});
+    </script>
+</body>
+</html>

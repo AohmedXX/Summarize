@@ -1,0 +1,402 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Upload</title>
+    <link rel="icon" type="image/png" href="duckk.jpg">
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://unpkg.com/lucide@latest"></script>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Cairo:wght@300;400;600;700&display=swap');
+        body {
+            font-family: 'Cairo', sans-serif;
+        }
+        .animate-fade-in-up { animation: fadeInUp 300ms ease-out both; }
+        @keyframes fadeInUp { 0% { opacity:0; transform: translateY(8px);} 100% { opacity:1; transform: translateY(0);} }
+        
+        /* Fix form direction */
+        form, input, textarea, select {
+            direction: inherit;
+        }
+        
+        /* Radio button styling */
+        label input[type="radio"] {
+            display: none;
+        }
+        
+        label input[type="radio"]:checked + .flex {
+            border-color: currentColor;
+            background-color: rgba(59, 130, 246, 0.1);
+            box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
+        }
+        
+        .dark label input[type="radio"]:checked + .flex {
+            background-color: rgba(59, 130, 246, 0.2);
+        }
+    </style>
+</head>
+<body class="bg-slate-50 dark:bg-slate-900 min-h-screen transition-colors duration-200">
+    <!-- Toast Notification System -->
+    <script src="toast.js"></script>
+    <!-- Firebase SDKs - Initialize before app.js -->
+    <script src="https://www.gstatic.com/firebasejs/10.5.0/firebase-app.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.5.0/firebase-database.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.5.0/firebase-auth.js"></script>
+    <script src="firebase-config.js"></script>
+    <script src="database-adapter.js"></script>
+    <script src="app.js"></script>
+
+    <!-- Navbar -->
+    <nav class="bg-white dark:bg-gray-900 shadow-sm sticky top-0 z-50 border-b border-gray-100 dark:border-gray-800 transition-colors duration-200">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="flex justify-between h-16 items-center">
+                <div class="flex items-center">
+                    <a href="index.html" class="flex items-center gap-2 text-2xl font-bold text-gray-900 dark:text-white" data-i18n="siteName">
+                        <i data-lucide="book-open" class="h-8 w-8 text-blue-600 ml-2"></i>
+                        <span>Summarize</span>
+                    </a>
+                </div>
+                <div class="flex items-center gap-2 sm:gap-4">
+                    <!-- Toggles -->
+                    <button onclick="appManager.toggleTheme()" class="p-2 rounded-full hover:bg-gray-100 dark:hover:bg-gray-800 text-gray-600 dark:text-gray-300 transition" aria-label="Toggle Theme">
+                        <i data-lucide="moon" class="h-5 w-5 hidden dark:block"></i>
+                        <i data-lucide="sun" class="h-5 w-5 block dark:hidden"></i>
+                    </button>
+                    
+                    <button onclick="appManager.toggleLanguage()" class="p-2 rounded-full hover:bg-gray-100 dark:hover:bg-gray-800 text-gray-600 dark:text-gray-300 transition" aria-label="Toggle Language">
+                        <i data-lucide="languages" class="h-5 w-5"></i>
+                    </button>
+
+                    <!-- Auth Section -->
+                    <div id="authSection" class="flex items-center gap-2 sm:gap-4">
+                        <a href="index.html" class="text-gray-600 dark:text-gray-300 hover:text-blue-600 dark:hover:text-blue-400 px-3 py-2 rounded-md transition" data-i18n="browse">تصفح الملفات</a>
+                        <a href="upload.html" class="text-blue-600 dark:text-blue-400 font-semibold bg-blue-50 dark:bg-blue-900/20 px-3 py-2 rounded-md transition" data-i18n="upload">رفع ملف</a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </nav>
+
+    <!-- Upload Section -->
+    <div class="max-w-3xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
+        <div class="bg-white dark:bg-gray-800 rounded-2xl shadow-sm border border-gray-100 dark:border-gray-700 p-8 transition-colors duration-200 animate-fade-in-up">
+            <h1 class="text-3xl font-bold text-gray-900 dark:text-white mb-2" data-i18n="uploadTitle">رفع ملف جديد</h1>
+            <p class="text-gray-500 dark:text-gray-400 mb-8" data-i18n="uploadDesc">شارك ملخصاتك ومذكراتك مع زملائك بسهولة.</p>
+            <div class="mb-6 bg-blue-50 dark:bg-blue-900/20 border-l-4 border-blue-600 dark:border-blue-400 text-blue-800 dark:text-blue-200 px-4 py-3 rounded-lg flex items-center gap-3">
+                <i data-lucide="info" class="h-5 w-5 flex-shrink-0"></i>
+                <span data-i18n="pendingReview">الملف سيكون قيد المراجعة من قبل المشرفين قبل نشره</span>
+            </div>
+
+            <form id="uploadForm" class="space-y-8">
+                <!-- Section 1: File Info -->
+                <div class="bg-gradient-to-br from-blue-50 to-indigo-50 dark:from-blue-900/30 dark:to-indigo-900/20 border-l-4 border-blue-600 dark:border-blue-400 rounded-2xl p-6">
+                    <h2 class="text-xl font-bold text-blue-700 dark:text-blue-200 mb-4 flex items-center gap-2">
+                        <i data-lucide="file-text" class="h-6 w-6 text-blue-600 dark:text-blue-400"></i>
+                        معلومات الملف
+                    </h2>
+                    
+                    <div class="space-y-4">
+                        <!-- Title Input -->
+                        <div>
+                            <label for="title" class="block text-sm font-semibold text-gray-700 dark:text-gray-300 mb-2" data-i18n="fileTitle"></label>
+                            <input type="text" id="title" required class="block w-full rounded-lg border-2 border-gray-300 dark:border-gray-600 shadow-sm focus:border-blue-500 focus:ring-blue-500 py-3 px-4 bg-white dark:bg-gray-700 text-gray-900 dark:text-white transition" data-i18n="fileTitle">
+                        </div>
+
+                        <!-- Subject Input -->
+                        <div>
+                            <label for="subject" class="block text-sm font-semibold text-gray-700 dark:text-gray-300 mb-2" data-i18n="subject"></label>
+                            <input type="text" id="subject" required class="block w-full rounded-lg border-2 border-gray-300 dark:border-gray-600 shadow-sm focus:border-blue-500 focus:ring-blue-500 py-3 px-4 bg-white dark:bg-gray-700 text-gray-900 dark:text-white transition" data-i18n="subject">
+                        </div>
+
+                        <!-- Author input removed (profiles used instead) -->
+                    </div>
+                </div>
+
+                <!-- Section 2: File Classification -->
+                <div class="bg-gradient-to-br from-indigo-50 to-purple-50 dark:from-indigo-900/30 dark:to-purple-900/20 border-l-4 border-indigo-600 dark:border-indigo-400 rounded-2xl p-6">
+                    <h2 class="text-xl font-bold text-indigo-700 dark:text-indigo-200 mb-4 flex items-center gap-2">
+                        <i data-lucide="folder-open" class="h-6 w-6 text-indigo-600 dark:text-indigo-400"></i>
+                        تصنيف الملف
+                    </h2>
+                    
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        <!-- File Type -->
+                        <div>
+                            <label for="type" class="block text-sm font-semibold text-gray-700 dark:text-gray-300 mb-3" data-i18n="fileType">نوع الملف *</label>
+                            <div class="grid grid-cols-2 gap-3">
+                                <label class="relative flex items-center p-3 border-2 border-gray-300 dark:border-gray-600 rounded-lg cursor-pointer hover:border-blue-500 transition" title="ملخص">
+                                    <input type="radio" name="type" value="ملخص" class="hidden" checked>
+                                    <div class="flex flex-col items-center w-full text-center">
+                                        <i data-lucide="book-open" class="h-6 w-6 text-blue-600 mb-1"></i>
+                                        <span class="text-sm font-medium text-gray-700 dark:text-gray-300" data-i18n="typeSummary">ملخص</span>
+                                    </div>
+                                </label>
+
+                                <label class="relative flex items-center p-3 border-2 border-gray-300 dark:border-gray-600 rounded-lg cursor-pointer hover:border-green-500 transition" title="مذكرة">
+                                    <input type="radio" name="type" value="مذكرة" class="hidden">
+                                    <div class="flex flex-col items-center w-full text-center">
+                                        <i data-lucide="notebook" class="h-6 w-6 text-green-600 mb-1"></i>
+                                        <span class="text-sm font-medium text-gray-700 dark:text-gray-300" data-i18n="typeNote">مذكرة</span>
+                                    </div>
+                                </label>
+
+                                <label class="relative flex items-center p-3 border-2 border-gray-300 dark:border-gray-600 rounded-lg cursor-pointer hover:border-orange-500 transition" title="امتحان">
+                                    <input type="radio" name="type" value="امتحان سابق" class="hidden">
+                                    <div class="flex flex-col items-center w-full text-center">
+                                        <i data-lucide="clipboard-list" class="h-6 w-6 text-orange-600 mb-1"></i>
+                                        <span class="text-sm font-medium text-gray-700 dark:text-gray-300" data-i18n="typeExam">امتحان</span>
+                                    </div>
+                                </label>
+
+                                <label class="relative flex items-center p-3 border-2 border-gray-300 dark:border-gray-600 rounded-lg cursor-pointer hover:border-purple-500 transition" title="مشروع">
+                                    <input type="radio" name="type" value="مشروع" class="hidden">
+                                    <div class="flex flex-col items-center w-full text-center">
+                                        <i data-lucide="briefcase" class="h-6 w-6 text-purple-600 mb-1"></i>
+                                        <span class="text-sm font-medium text-gray-700 dark:text-gray-300" data-i18n="typeProject">مشروع</span>
+                                    </div>
+                                </label>
+                            </div>
+                        </div>
+
+                        <!-- Page Count -->
+                        <div>
+                            <label for="pageCount" class="block text-sm font-semibold text-gray-700 dark:text-gray-300 mb-2" data-i18n="pageCount"></label>
+                            <input type="number" id="pageCount" min="1" class="block w-full rounded-lg border-2 border-gray-300 dark:border-gray-600 shadow-sm focus:border-blue-500 focus:ring-blue-500 py-3 px-4 bg-white dark:bg-gray-700 text-gray-900 dark:text-white transition">
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Section 3: Description -->
+                <div class="bg-gradient-to-br from-slate-50 to-gray-50 dark:from-gray-800 dark:to-gray-900 border-l-4 border-slate-400 dark:border-slate-600 rounded-2xl p-6">
+                    <h2 class="text-xl font-bold text-slate-700 dark:text-slate-200 mb-4 flex items-center gap-2">
+                        <i data-lucide="edit" class="h-6 w-6 text-slate-600 dark:text-slate-400"></i>
+                        التفاصيل الإضافية
+                    </h2>
+                    
+                    <div>
+                        <label for="description" class="block text-sm font-semibold text-gray-700 dark:text-gray-300 mb-2" data-i18n="description"></label>
+                        <textarea id="description" rows="4" class="block w-full rounded-lg border-2 border-gray-300 dark:border-gray-600 shadow-sm focus:border-blue-500 focus:ring-blue-500 py-3 px-4 bg-white dark:bg-gray-700 text-gray-900 dark:text-white transition" data-i18n="description"></textarea>
+                    </div>
+                </div>
+
+                <!-- Section 4: File Upload -->
+                <div class="bg-gradient-to-br from-cyan-50 to-blue-50 dark:from-cyan-900/30 dark:to-blue-900/20 border-l-4 border-cyan-600 dark:border-cyan-400 rounded-2xl p-6">
+                    <h2 class="text-xl font-bold text-cyan-700 dark:text-cyan-200 mb-4 flex items-center gap-2">
+                        <i data-lucide="cloud-upload" class="h-6 w-6 text-cyan-600 dark:text-cyan-400"></i>
+                        رفع الملف
+                    </h2>
+                    
+                    <div class="flex justify-center px-6 pt-8 pb-8 border-3 border-dashed border-cyan-300 dark:border-cyan-600 rounded-2xl hover:bg-cyan-50/50 dark:hover:bg-cyan-900/20 transition cursor-pointer bg-white dark:bg-gray-800" id="dropzone">
+                        <div class="space-y-3 text-center">
+                            <i data-lucide="cloud-upload" class="mx-auto h-16 w-16 text-cyan-500 dark:text-cyan-400"></i>
+                            <div class="flex flex-col text-center">
+                                <label for="file-upload" class="relative cursor-pointer font-semibold text-cyan-600 dark:text-cyan-400 hover:text-cyan-700 dark:hover:text-cyan-300 transition focus-within:outline-none">
+                                    <span class="text-lg" data-i18n="selectFile">اختر ملفاً من جهازك</span>
+                                    <input id="file-upload" name="file-upload" type="file" class="sr-only" required accept=".pdf,.doc,.docx,.ppt,.pptx">
+                                </label>
+                                <p class="text-gray-600 dark:text-gray-400 mt-2" data-i18n="orDrag">أو اسحب الملف هنا</p>
+                            </div>
+                            <p class="text-xs text-gray-500 dark:text-gray-400 font-medium">
+                                PDF, DOC, DOCX, PPT, PPTX (الحد الأقصى: 50 MB)
+                            </p>
+                            <p id="fileName" class="text-base font-bold text-green-600 dark:text-green-400 mt-3 hidden flex items-center justify-center gap-2">
+                                <i data-lucide="check-circle" class="h-5 w-5"></i>
+                                <span></span>
+                            </p>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Submit Button -->
+                <button type="submit" id="submitBtn" class="w-full flex justify-center items-center gap-2 py-4 px-6 border border-transparent rounded-xl shadow-lg text-lg font-bold text-white bg-gradient-to-r from-blue-600 via-blue-700 to-indigo-700 hover:from-blue-700 hover:via-blue-800 hover:to-indigo-800 focus:outline-none focus:ring-4 focus:ring-blue-300 dark:focus:ring-blue-800 transition duration-200" data-i18n="submitUpload">
+                    <i data-lucide="upload" class="h-6 w-6"></i>
+                    <span>رفع الملف الآن</span>
+                </button>
+            </form>
+        </div>
+    </div>
+
+    <script src="app.js"></script>
+    <script>
+        // Check Authentication
+        document.addEventListener('DOMContentLoaded', () => {
+            setTimeout(() => {
+                if (!window.auth || !window.auth.isAuthenticated()) {
+                    window.location.href = 'login.html';
+                }
+                handleUploadForm();
+            }, 100);
+        });
+
+        // Initialize Lucide Icons
+        window.addEventListener('load', () => {
+            lucide.createIcons();
+            updateUploadPageLanguage();
+        });
+
+        function updateUploadPageLanguage() {
+            const lang = appManager.lang || 'ar';
+            document.getElementById('title').placeholder = appManager.t('fileTitle');
+            document.getElementById('subject').placeholder = appManager.t('subject');
+            document.getElementById('pageCount').placeholder = '1';
+            document.getElementById('description').placeholder = appManager.t('description');
+        }
+
+        // Listen for language changes
+        document.addEventListener('appLanguageChanged', updateUploadPageLanguage);
+
+        // Simple file name display logic
+        const fileInput = document.getElementById('file-upload');
+        const fileNameDisplay = document.getElementById('fileName');
+        
+        fileInput.addEventListener('change', (e) => {
+            if (e.target.files.length > 0) {
+                const fileName = e.target.files[0].name;
+                fileNameDisplay.innerHTML = fileName;
+                fileNameDisplay.classList.remove('hidden');
+            }
+        });
+
+        // Handle form submission and send to review queue
+        function handleUploadForm() {
+            const uploadForm = document.getElementById('uploadForm');
+            if (!uploadForm) return;
+
+                uploadForm.addEventListener('submit', async (e) => {
+                e.preventDefault();
+                
+                const title = document.getElementById('title').value;
+                const subject = document.getElementById('subject').value;
+                const type = document.querySelector('input[name="type"]:checked').value;
+                const fileInput = document.getElementById('file-upload');
+                const pageCount = document.getElementById('pageCount').value || '0';
+                const description = document.getElementById('description').value || '';
+                const currentUser = window.auth?.getCurrentUser();
+                
+                // Validate authentication
+                if (!currentUser) {
+                    toast.error('يجب تسجيل الدخول أولاً' || 'Must login first');
+                    return;
+                }
+
+                // Validate file selected
+                if (!fileInput.files[0]) {
+                    toast.error(appManager?.lang === 'ar' ? 'اختر ملفاً' : 'Please select a file');
+                    return;
+                }
+
+                const file = fileInput.files[0];
+
+                // 🔒 Security: Validate file type
+                if (!security.isValidFileType(file)) {
+                    toast.error(appManager?.lang === 'ar' ? 'نوع الملف غير مدعوم' : 'File type not supported. Use: PDF, DOC, DOCX, PPT, PPTX, TXT');
+                    return;
+                }
+
+                // 🔒 Security: Validate file size
+                if (!security.isValidFileSize(file)) {
+                    toast.error(appManager?.lang === 'ar' ? 'حجم الملف كبير جداً (50 ميجا بايت كحد أقصى)' : 'File too large (max 50 MB)');
+                    return;
+                }
+
+                // 🔒 Security: Validate title
+                if (!security.validateLength(title, 3, 100)) {
+                    toast.error(appManager?.lang === 'ar' ? 'العنوان: 3-100 حروف' : 'Title: 3-100 chars');
+                    return;
+                }
+
+                // 🔒 Security: Check for XSS in text inputs
+                if (security.hasXSSPatterns(title) || security.hasXSSPatterns(subject) || security.hasXSSPatterns(description)) {
+                    toast.error(security.createSecureError(appManager?.lang === 'ar' ? 'محتوى غير آمن' : 'Invalid content'));
+                    return;
+                }
+
+                // 🔒 Security: Sanitize inputs
+                const cleanTitle = security.sanitizeInput(title);
+                const cleanSubject = security.sanitizeInput(subject);
+                const cleanDescription = security.sanitizeInput(description);
+
+                const fileSize = (file.size / 1024 / 1024).toFixed(2) + ' MB';
+                
+                // Create file object with sanitized data
+                const fileObj = {
+                    id: Date.now(),
+                    title: cleanTitle,
+                    subject: cleanSubject,
+                    type: type,
+                    size: fileSize,
+                    date: new Date().toLocaleDateString(appManager?.lang === 'ar' ? 'ar-EG' : 'en-US'),
+                    uploadedBy: (currentUser?.email || 'unknown').toLowerCase(),
+                    uploadedByName: currentUser?.name || (appManager?.lang === 'ar' ? 'مجهول' : 'Unknown'),
+                    pageCount: parseInt(pageCount || 0),
+                    description: cleanDescription,
+                    downloads: 0,
+                    scan: {
+                        safe: true,
+                        reason: ''
+                    }
+                };
+
+                // Save file to review queue
+                try {
+                    const reviewQueue = JSON.parse(localStorage.getItem('review') || '[]');
+                    
+                    // 🔒 Security: Check duplicate submissions (prevent spam)
+                    const recentDuplicate = reviewQueue.filter(f => {
+                        return f.uploadedBy === fileObj.uploadedBy && 
+                               Date.now() - f.id < 60000; // Within 1 minute
+                    }).length;
+                    
+                    if (recentDuplicate > 0) {
+                        toast.error(appManager?.lang === 'ar' ? 'لا تستطيع رفع ملفات متعددة خلال دقيقة' : 'Too many uploads. Wait before uploading again.');
+                        return;
+                    }
+
+                    reviewQueue.push(fileObj);
+                    localStorage.setItem('review', JSON.stringify(reviewQueue));
+                } catch (e) {
+                    toast.error(security.createSecureError(appManager?.lang === 'ar' ? 'خطأ في الحفظ' : 'Error saving data'));
+                    return;
+                }
+
+                // Save file blob to IndexedDB if possible
+                try {
+                    const request = indexedDB.open('summarizee', 1);
+                    request.onupgradeneeded = (e) => {
+                        const db = e.target.result;
+                        if (!db.objectStoreNames.contains('files')) {
+                            db.createObjectStore('files', { keyPath: 'id' });
+                        }
+                    };
+                    
+                    request.onsuccess = () => {
+                        const db = request.result;
+                        const transaction = db.transaction('files', 'readwrite');
+                        const store = transaction.objectStore('files');
+                        store.put({
+                            id: fileObj.id,
+                            blob: file,
+                            metadata: fileObj
+                        });
+                    };
+                } catch (err) {
+                    console.log('IndexedDB not available, file metadata saved only');
+                }
+
+                // Show success message
+                toast.success(appManager?.t('successUpload') || 'تم الرفع بنجاح! في انتظار الموافقة');
+                
+                // Reset form
+                uploadForm.reset();
+                fileNameDisplay.classList.add('hidden');
+                
+                // Redirect to home after delay
+                setTimeout(() => {
+                    window.location.href = 'index.html';
+                }, 1500);
+            });
+        }
+    </script>
+</body>
+</html>

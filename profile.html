@@ -1,0 +1,225 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>الملف الشخصي</title>
+    <link rel="icon" href="duckk.jpg">
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://unpkg.com/lucide@latest"></script>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Cairo:wght@300;400;600;700&display=swap');
+        body { font-family: 'Cairo', sans-serif; }
+    </style>
+</head>
+<body class="bg-slate-50 dark:bg-slate-900 min-h-screen">
+    <script src="toast.js"></script>
+    <!-- App -->
+    <script src="app.js"></script>
+
+    <nav class="bg-white dark:bg-gray-900 shadow-sm sticky top-0 z-50 border-b border-gray-100 dark:border-gray-800 transition-colors duration-200">
+        <div class="max-w-7xl mx-auto px-4">
+            <div class="flex justify-between h-16 items-center">
+                <a href="index.html" class="font-bold text-lg text-gray-900 dark:text-white">Summarize</a>
+                <div class="flex items-center gap-2">
+                    <div class="flex items-center gap-2 border-r border-gray-200 dark:border-gray-700 pr-4 mr-2">
+                        <button onclick="appManager.toggleTheme()" class="p-2 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-800 text-gray-600 dark:text-gray-300" aria-label="Toggle Theme">
+                            <i data-lucide="moon" class="w-5 h-5 hidden dark:block"></i>
+                            <i data-lucide="sun" class="w-5 h-5 block dark:hidden"></i>
+                        </button>
+                        <button onclick="appManager.toggleLanguage()" class="p-2 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-800 text-gray-600 dark:text-gray-300" aria-label="Toggle Language">
+                            <i data-lucide="languages" class="w-5 h-5"></i>
+                        </button>
+                    </div>
+                    <div id="authSection" class="flex items-center"></div>
+                </div>
+            </div>
+        </div>
+    </nav>
+
+    <main class="max-w-3xl mx-auto p-6">
+        <h1 class="text-2xl font-bold mb-4" data-i18n="profile"></h1>
+
+        <div class="bg-white dark:bg-gray-800 rounded-xl p-6 shadow-sm">
+            <form id="profileForm" class="space-y-4">
+                <div class="flex items-center gap-4">
+                    <div class="w-24 h-24 rounded-full bg-gray-100 overflow-hidden flex items-center justify-center" id="avatarPreviewWrap">
+                        <img id="avatarPreview" src="" alt="avatar" class="w-full h-full object-cover hidden">
+                        <span id="avatarInitials" class="text-white bg-indigo-600 w-full h-full flex items-center justify-center text-xl font-bold"></span>
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 dark:text-gray-300" data-i18n="avatar"></label>
+                        <input id="avatarInput" type="file" accept="image/*" class="mt-2 w-full text-sm" />
+                        <p class="text-xs text-gray-500 mt-1" data-i18n="avatarHint"></p>
+                    </div>
+                </div>
+
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 dark:text-gray-300" data-i18n="fullName"></label>
+                    <input id="nameInput" type="text" class="mt-1 block w-full rounded-md border-gray-200 p-3 bg-white dark:bg-gray-700 text-right" />
+                </div>
+
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 dark:text-gray-300" data-i18n="email"></label>
+                    <input id="emailInput" type="email" class="mt-1 block w-full rounded-md border-gray-200 p-3 bg-white dark:bg-gray-700 text-right" />
+                </div>
+
+                <div class="flex gap-3">
+                    <button id="saveBtn" type="button" class="px-4 py-2 bg-blue-600 text-white rounded-lg" data-i18n="save"></button>
+                    <a href="index.html" class="px-4 py-2 bg-gray-200 rounded-lg" data-i18n="cancel"></a>
+                </div>
+            </form>
+        </div>
+    </main>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            lucide.createIcons();
+            updateProfilePageLanguage();
+            const current = JSON.parse(localStorage.getItem('currentUser')) || null;
+            const nameInput = document.getElementById('nameInput');
+            const emailInput = document.getElementById('emailInput');
+            const avatarInput = document.getElementById('avatarInput');
+            const avatarPreview = document.getElementById('avatarPreview');
+            const avatarInitials = document.getElementById('avatarInitials');
+            const avatarWrap = document.getElementById('avatarPreviewWrap');
+
+            function showInitials(name) {
+                if (!name) { avatarInitials.textContent = 'U'; return; }
+                const parts = name.trim().split(/\s+/).map(p => p[0]).slice(0,2).join('');
+                avatarInitials.textContent = parts.toUpperCase();
+            }
+
+            if (current) {
+                nameInput.value = current.name || '';
+                emailInput.value = current.email || '';
+                if (current.avatar) {
+                    avatarPreview.src = current.avatar;
+                    avatarPreview.classList.remove('hidden');
+                    avatarInitials.classList.add('hidden');
+                } else {
+                    avatarPreview.classList.add('hidden');
+                    avatarInitials.classList.remove('hidden');
+                    showInitials(current.name);
+                }
+            } else {
+                showInitials('U');
+            }
+
+            avatarInput.addEventListener('change', (e) => {
+                const f = e.target.files && e.target.files[0];
+                if (!f) return;
+                const reader = new FileReader();
+                reader.onload = () => {
+                    avatarPreview.src = reader.result;
+                    avatarPreview.classList.remove('hidden');
+                    avatarInitials.classList.add('hidden');
+                };
+                reader.readAsDataURL(f);
+            });
+
+            document.getElementById('saveBtn').addEventListener('click', async () => {
+                const name = nameInput.value.trim();
+                const email = emailInput.value.trim().toLowerCase();
+                let avatar = null;
+                if (avatarPreview && !avatarPreview.classList.contains('hidden')) avatar = avatarPreview.src;
+
+                // 🔒 Security: Validate inputs
+                if (!security.validateUsername(name)) {
+                    toast.error(appManager.t('invalidName'));
+                    return;
+                }
+
+                if (!security.validateEmail(email)) {
+                    toast.error(appManager.t('invalidEmail'));
+                    return;
+                }
+
+                // 🔒 Security: Check for XSS
+                if (security.hasXSSPatterns(name) || security.hasXSSPatterns(email)) {
+                    toast.error(security.createSecureError(appManager.t('unsafeContent')));
+                    return;
+                }
+
+                // 🔒 Security: Sanitize inputs
+                const cleanName = security.sanitizeInput(name);
+                const cleanEmail = security.sanitizeInput(email);
+
+                // update currentUser and users list (robust: match by id, fallback to email, or insert)
+                const currentUser = JSON.parse(localStorage.getItem('currentUser')) || null;
+                if (!currentUser) { toast.error(appManager.t('mustLoginFirst')); return; }
+
+                const updated = { ...currentUser, name: cleanName, email: cleanEmail };
+                if (avatar) updated.avatar = avatar;
+                localStorage.setItem('currentUser', JSON.stringify(updated));
+
+                // update users array if exists (case-insensitive email match)
+                let users = JSON.parse(localStorage.getItem('users') || '[]');
+                const lowerOldEmail = (currentUser.email || '').toLowerCase();
+                const lowerNewEmail = (updated.email || '').toLowerCase();
+                
+                // Check if email already used by someone else
+                const emailExists = users.some(u => 
+                    String(u.email || '').toLowerCase() === lowerNewEmail && 
+                    String(u.id) !== String(updated.id)
+                );
+                if (emailExists) {
+                    toast.error(appManager.t('emailAlreadyInUse'));
+                    return;
+                }
+
+                let idx = users.findIndex(u => String(u.id) === String(updated.id));
+                if (idx === -1) {
+                    idx = users.findIndex(u => String(u.email || '').toLowerCase() === lowerOldEmail);
+                }
+
+                if (idx !== -1) {
+                    users[idx] = { ...users[idx], name: updated.name, email: updated.email };
+                    if (updated.avatar) users[idx].avatar = updated.avatar;
+                } else {
+                    // not found in users array -> add
+                    const newUser = { id: updated.id || ('user_' + Date.now()), name: updated.name, email: updated.email, password: updated.password || '', role: updated.role || 'student', createdAt: updated.createdAt || new Date().toISOString() };
+                    if (updated.avatar) newUser.avatar = updated.avatar;
+                    users.push(newUser);
+                }
+                localStorage.setItem('users', JSON.stringify(users));
+
+                // Propagate profile changes to existing files & review entries
+                try {
+                    const files = JSON.parse(localStorage.getItem('files') || '[]');
+                    const review = JSON.parse(localStorage.getItem('review') || '[]');
+                    const allLists = [files, review];
+                    allLists.forEach(list => {
+                        list.forEach(f => {
+                            // clear original author field globally
+                            if (f.hasOwnProperty('author')) f.author = '';
+
+                            // update uploadedByName when uploader matches old email (case-insensitive)
+                            if (String(f.uploadedBy || '').toLowerCase() === lowerOldEmail) {
+                                f.uploadedBy = lowerNewEmail; // normalize
+                                f.uploadedByName = updated.name || f.uploadedByName || updated.email;
+                            }
+                        });
+                    });
+                    localStorage.setItem('files', JSON.stringify(files));
+                    localStorage.setItem('review', JSON.stringify(review));
+                } catch (e) {
+                    console.error('Error propagating profile to files:', e);
+                }
+
+                // refresh nav and file listings
+                if (typeof updateAuthUI === 'function') updateAuthUI();
+                if (typeof fetchFiles === 'function') fetchFiles();
+                toast.success(appManager.t('changesSaved'));
+            });
+        });
+
+        function updateProfilePageLanguage() {
+            const lang = appManager.lang || 'ar';
+        }
+
+        // Listen for language changes
+        document.addEventListener('appLanguageChanged', updateProfilePageLanguage);
+    </script>
+</body>
+</html>

@@ -1,0 +1,164 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>تسجيل الدخول</title>
+    <link rel="icon" type="image/png" href="duckk.jpg">
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://unpkg.com/lucide@latest"></script>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Cairo:wght@300;400;600;700&display=swap');
+        body {
+            font-family: 'Cairo', sans-serif;
+        }
+        .animate-fade-in-up { animation: fadeInUp 300ms ease-out both; }
+        @keyframes fadeInUp { 0% { opacity:0; transform: translateY(8px);} 100% { opacity:1; transform: translateY(0);} }
+    </style>
+    <script>
+        tailwind.config = {
+            darkMode: 'class',
+        }
+    </script>
+</head>
+<body class="bg-slate-50 dark:bg-slate-900 min-h-screen flex flex-col transition-colors duration-200">
+    <!-- Toast Notification System -->
+    <script src="toast.js"></script>
+    <!-- App -->
+    <script src="app.js"></script>
+
+    <!-- Navbar -->
+    <nav class="bg-white dark:bg-gray-900 shadow-sm sticky top-0 z-50 border-b border-gray-100 dark:border-gray-800 transition-colors duration-200">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="flex justify-between h-16 items-center">
+                <div class="flex items-center">
+                    <a href="index.html" class="flex items-center gap-2 text-2xl font-bold text-gray-900 dark:text-white" data-i18n="siteName">
+                        <i data-lucide="book-open" class="h-8 w-8 text-blue-600 ml-2"></i>
+                        <span>Summarize</span>
+                    </a>
+                </div>
+                <div class="flex items-center gap-2 sm:gap-4">
+                    <div class="flex items-center gap-2 border-r border-gray-200 dark:border-gray-700 pr-4 mr-2">
+                        <button onclick="appManager.toggleTheme()" class="p-2 rounded-full hover:bg-gray-100 dark:hover:bg-gray-800 text-gray-600 dark:text-gray-300 transition" aria-label="Toggle Theme">
+                            <i data-lucide="moon" class="h-5 w-5 hidden dark:block"></i>
+                            <i data-lucide="sun" class="h-5 w-5 block dark:hidden"></i>
+                        </button>
+                        <button onclick="appManager.toggleLanguage()" class="p-2 rounded-full hover:bg-gray-100 dark:hover:bg-gray-800 text-gray-600 dark:text-gray-300 transition" aria-label="Toggle Language">
+                            <i data-lucide="languages" class="h-5 w-5"></i>
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </nav>
+
+    <!-- Login Form -->
+    <div class="flex-grow flex items-center justify-center py-12 px-4 sm:px-6 lg:px-8">
+        <div class="max-w-md w-full space-y-8 bg-white dark:bg-gray-800 p-8 rounded-2xl shadow-sm border border-gray-100 dark:border-gray-700 transition-colors duration-200 animate-fade-in-up">
+            <div>
+                <h2 class="mt-6 text-center text-3xl font-extrabold text-gray-900 dark:text-white" data-i18n="loginTitle"></h2>
+                <p class="mt-2 text-center text-sm text-gray-600 dark:text-gray-400">
+                    <span data-i18n="noAccount"></span> <a href="register.html" class="font-medium text-blue-600 dark:text-blue-400 hover:text-blue-500" data-i18n="createAccountLink"></a>
+                </p>
+            </div>
+            <form class="mt-8 space-y-6" id="loginForm">
+                <div class="rounded-md shadow-sm space-y-4">
+                    <div>
+                        <label for="email" class="sr-only" data-i18n="email"></label>
+                        <input id="email" name="email" type="email" autocomplete="email" required class="appearance-none rounded-lg relative block w-full px-3 py-3 border border-gray-300 dark:border-gray-600 placeholder-gray-500 dark:placeholder-gray-400 text-gray-900 dark:text-white bg-white dark:bg-gray-700 focus:outline-none focus:ring-blue-500 focus:border-blue-500 focus:z-10 sm:text-sm">
+                    </div>
+                    <div>
+                        <label for="password" class="sr-only" data-i18n="password"></label>
+                        <input id="password" name="password" type="password" autocomplete="current-password" required class="appearance-none rounded-lg relative block w-full px-3 py-3 border border-gray-300 dark:border-gray-600 placeholder-gray-500 dark:placeholder-gray-400 text-gray-900 dark:text-white bg-white dark:bg-gray-700 focus:outline-none focus:ring-blue-500 focus:border-blue-500 focus:z-10 sm:text-sm">
+                    </div>
+                </div>
+
+                <div class="flex items-center justify-between">
+                    <div class="flex items-center">
+                        <input id="remember-me" name="remember-me" type="checkbox" class="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 dark:border-gray-600 rounded bg-white dark:bg-gray-700">
+                        <label for="remember-me" class="ml-2 block text-sm text-gray-900 dark:text-gray-300 mr-2" data-i18n="rememberMe"></label>
+                    </div>
+
+                    <!-- <div class="text-sm">
+                        <a href="reset.html" id="forgotLink" class="font-medium text-blue-600 dark:text-blue-400 hover:text-blue-500" data-i18n="forgotPassword"></a>
+                    </div>
+                </div> -->
+
+                <div>
+                    <button type="submit" class="group relative w-full flex justify-center py-3 px-4 border border-transparent text-sm font-medium rounded-xl text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 transition" data-i18n="login"></button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <script type="module" src="app.js"></script>
+    <script>
+window.addEventListener('load', () => {
+    lucide.createIcons();
+    updateLoginPageLanguage();
+});
+
+function updateLoginPageLanguage() {
+    const lang = appManager.lang || 'ar';
+    document.getElementById('email').placeholder = appManager.t('email');
+    document.getElementById('password').placeholder = appManager.t('password');
+}
+
+// Listen for language changes
+document.addEventListener('appLanguageChanged', updateLoginPageLanguage);
+
+document.getElementById('loginForm').addEventListener('submit', (e) => {
+    e.preventDefault();
+    const email = document.getElementById('email').value.trim().toLowerCase();
+    const password = document.getElementById('password').value;
+
+    // Rate limiting - prevent brute force
+    if (!security.checkRateLimit('login_' + email, 5, 60000)) {
+        toast.error(appManager.lang === 'ar' ? 'حاولت عدة مرات. حاول لاحقاً.' : 'Too many attempts. Try again later.');
+        return;
+    }
+
+    // Validate email format
+    if (!security.validateEmail(email)) {
+        toast.error(appManager.lang === 'ar' ? 'البريد الإلكتروني غير صحيح' : 'Invalid email');
+        return;
+    }
+
+    // Check for XSS patterns
+    if (security.hasXSSPatterns(email) || security.hasXSSPatterns(password)) {
+        toast.error(security.createSecureError(appManager.lang === 'ar' ? 'محتوى غير آمن' : 'Invalid input'));
+        return;
+    }
+
+    try {
+        // البحث في الذاكرة المحلية بدلاً من السيرفر
+        const users = JSON.parse(localStorage.getItem('users') || '[]');
+        const user = users.find(u => u.email === email && u.password === password);
+
+        if (user) {
+            // Create secure copy of user without sensitive data on client
+            const safeUser = {
+                id: user.id,
+                name: user.name,
+                email: user.email,
+                role: user.role,
+                avatar: user.avatar || undefined,
+                createdAt: user.createdAt
+            };
+            // حفظ المستخدم الحالي عشان الـ Navbar (app.js) يحس بيه
+            localStorage.setItem('currentUser', JSON.stringify(safeUser));
+            toast.success(appManager.lang === 'ar' ? 'تم الدخول بنجاح' : 'Login successful');
+            setTimeout(() => {
+                window.location.href = 'index.html';
+            }, 500);
+        } else {
+            // Generic error message to prevent email enumeration
+            toast.error(security.createSecureError(appManager.lang === 'ar' ? 'بيانات الدخول غير صحيحة' : 'Invalid credentials'));
+        }
+    } catch (error) {
+        toast.error(security.createSecureError(appManager.lang === 'ar' ? 'حدث خطأ' : 'An error occurred'));
+    }
+});
+    </script>
+</body>
+</html>

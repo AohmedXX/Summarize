@@ -1,0 +1,187 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>File Details - Summarize</title>
+    <link rel="icon" type="image/png" href="duckk.jpg">
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://unpkg.com/lucide@latest"></script>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Cairo:wght@300;400;600;700&display=swap');
+        body {
+            font-family: 'Cairo', sans-serif;
+        }
+        .animate-fade-in-up { animation: fadeInUp 300ms ease-out both; }
+        @keyframes fadeInUp { 0% { opacity:0; transform: translateY(8px);} 100% { opacity:1; transform: translateY(0);} }
+    </style>
+</head>
+<body class="bg-slate-50 dark:bg-slate-900 min-h-screen transition-colors duration-200 flex flex-col">
+    <!-- Toast Notification System -->
+    <script src="toast.js"></script>
+    <!-- App -->
+    <script src="app.js"></script>
+
+    <!-- Navbar -->
+    <nav class="bg-white dark:bg-gray-900 shadow-sm sticky top-0 z-50 border-b border-gray-100 dark:border-gray-800 transition-colors duration-200">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="flex justify-between h-16 items-center">
+                <div class="flex items-center">
+                    <a href="index.html" class="flex items-center gap-2 text-2xl font-bold text-gray-900 dark:text-white" data-i18n="siteName">
+                        <i data-lucide="book-open" class="h-8 w-8 text-blue-600 ml-2"></i>
+                        <span>Summarize</span>
+                    </a>
+                </div>
+                <div class="flex items-center gap-2 sm:gap-4">
+                    <div class="flex items-center gap-2 border-r border-gray-200 dark:border-gray-700 pr-4 mr-2">
+                        <button onclick="appManager.toggleTheme()" class="p-2 rounded-full hover:bg-gray-100 dark:hover:bg-gray-800 text-gray-600 dark:text-gray-300 transition" aria-label="Toggle Theme">
+                            <i data-lucide="moon" class="h-5 w-5 hidden dark:block"></i>
+                            <i data-lucide="sun" class="h-5 w-5 block dark:hidden"></i>
+                        </button>
+                        <button onclick="appManager.toggleLanguage()" class="p-2 rounded-full hover:bg-gray-100 dark:hover:bg-gray-800 text-gray-600 dark:text-gray-300 transition" aria-label="Toggle Language">
+                            <i data-lucide="languages" class="h-5 w-5"></i>
+                        </button>
+                    </div>
+                    <div id="authSection" class="flex items-center gap-2 sm:gap-4">
+                        <a href="index.html" class="text-gray-600 hover:text-blue-600 dark:text-gray-300 dark:hover:text-blue-400 px-3 py-2 rounded-md transition" data-i18n="browse">تصفح الملفات</a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </nav>
+
+    <!-- Main Content -->
+    <div class="flex-grow max-w-4xl mx-auto w-full px-4 sm:px-6 lg:px-8 py-12">
+        <div class="mb-6">
+            <a href="index.html" class="inline-flex items-center text-gray-500 hover:text-blue-600 dark:text-gray-400 dark:hover:text-blue-400 transition">
+                <i data-lucide="arrow-right" class="h-4 w-4 rtl:ml-2 ltr:mr-2 ltr:rotate-180"></i>
+                <span data-i18n="backHome">العودة للرئيسية</span>
+            </a>
+        </div>
+
+        <div id="fileContainer" class="bg-white dark:bg-gray-800 rounded-2xl shadow-lg border border-gray-100 dark:border-gray-700 p-8 sm:p-10 animate-fade-in-up">
+            <div class="text-center py-12">
+                <i data-lucide="loader-2" class="h-10 w-10 animate-spin text-blue-600 mx-auto"></i>
+                <p class="mt-4 text-gray-500 dark:text-gray-400" data-i18n="loading">جاري تحميل البيانات...</p>
+            </div>
+        </div>
+    </div>
+
+    <!-- Footer -->
+    <footer class="bg-white dark:bg-gray-900 mt-auto border-t border-gray-200 dark:border-gray-800 transition-colors duration-200">
+        <div class="max-w-7xl mx-auto py-8 px-4 sm:px-6 lg:px-8 text-center">
+            <p class="text-gray-400" data-i18n="footer">&copy; 2026 Summarize. جميع الحقوق محفوظة.</p>
+        </div>
+    </footer>
+
+    <script src="app.js"></script>
+    <script>
+        document.addEventListener('DOMContentLoaded', async () => {
+            setTimeout(async () => {
+                const params = new URLSearchParams(window.location.search);
+                const id = params.get('id');
+                const container = document.getElementById('fileContainer');
+
+                if (!id) {
+                    window.location.href = 'index.html';
+                    return;
+                }
+
+                // Need to wait for appManager and DataStore to be ready/loaded
+                // Since they are in app.js which is a module, they might not be globally available immediately if not attached to window.
+                // In app.js we did `window.appManager = appManager`.
+
+                const files = (window.filesCache && window.filesCache.length ? window.filesCache : (DataStore.getFiles() || []));
+                const file = files.find(f => f.id == id);
+
+                if (!file) {
+                    container.innerHTML = `
+                        <div class="text-center py-12">
+                            <i data-lucide="file-x" class="h-16 w-16 text-red-500 mx-auto mb-4"></i>
+                            <h2 class="text-2xl font-bold text-gray-900 dark:text-white mb-2">الملف غير موجود</h2>
+                            <p class="text-gray-500 dark:text-gray-400">يبدو أن الملف الذي تبحث عنه قد تم حذفه أو الرابط غير صحيح.</p>
+                        </div>
+                    `;
+                    lucide.createIcons();
+                    return;
+                }
+
+                // Render File Details
+                const iconColor = file.type === 'امتحان سابق' ? 'text-red-600 dark:text-red-400' : 
+                                 (file.type === 'مذكرة' ? 'text-green-600 dark:text-green-400' : 'text-blue-600 dark:text-blue-400');
+                const iconBg = file.type === 'امتحان سابق' ? 'bg-red-50 dark:bg-red-900/20' : 
+                              (file.type === 'مذكرة' ? 'bg-green-50 dark:bg-green-900/20' : 'bg-blue-50 dark:bg-blue-900/20');
+
+                container.innerHTML = `
+                    <div class="flex flex-col md:flex-row gap-8 items-start">
+                        <div class="w-full md:w-1/3 flex flex-col items-center">
+                            <div class="${iconBg} p-8 rounded-2xl mb-6 w-full flex items-center justify-center aspect-square">
+                                <i data-lucide="file-text" class="${iconColor} h-24 w-24"></i>
+                            </div>
+                        </div>
+                        
+                        <div class="w-full md:w-2/3">
+                            <div class="flex items-center gap-3 mb-4">
+                                <span class="text-sm font-medium text-gray-500 dark:text-gray-400 bg-gray-100 dark:bg-gray-700 px-3 py-1 rounded-full border border-gray-200 dark:border-gray-600">
+                                    ${appManager.translateFileType(file.type)}
+                                </span>
+                                <span class="text-sm text-gray-400 dark:text-gray-500">${file.date}</span>
+                            </div>
+                            
+                            <h1 class="text-3xl md:text-4xl font-bold text-gray-900 dark:text-white mb-4 leading-tight">${file.title}</h1>
+                            
+                            <div class="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-8">
+                                <div class="bg-gray-50 dark:bg-gray-700/50 p-4 rounded-xl border border-gray-100 dark:border-gray-700">
+                                    <p class="text-xs text-gray-500 dark:text-gray-400 mb-1" data-i18n="subject">المادة</p>
+                                    <p class="font-semibold text-gray-900 dark:text-white flex items-center gap-2">
+                                        <i data-lucide="book" class="h-4 w-4 text-blue-500"></i>
+                                        ${file.subject}
+                                    </p>
+                                </div>
+                                <div class="bg-gray-50 dark:bg-gray-700/50 p-4 rounded-xl border border-gray-100 dark:border-gray-700">
+                                    <p class="text-xs text-gray-500 dark:text-gray-400 mb-1" data-i18n="size">الحجم</p>
+                                    <p class="font-semibold text-gray-900 dark:text-white flex items-center gap-2">
+                                        <i data-lucide="hard-drive" class="h-4 w-4 text-blue-500"></i>
+                                        ${file.size}
+                                    </p>
+                                </div>
+                                <div class="bg-gray-50 dark:bg-gray-700/50 p-4 rounded-xl border border-gray-100 dark:border-gray-700">
+                                    <p class="text-xs text-gray-500 dark:text-gray-400 mb-1" data-i18n="pageCount">عدد الصفحات</p>
+                                    <p class="font-semibold text-gray-900 dark:text-white flex items-center gap-2">
+                                        <i data-lucide="file" class="h-4 w-4 text-blue-500"></i>
+                                        ${file.pageCount || 'N/A'}
+                                    </p>
+                                </div>
+                                <div class="bg-gray-50 dark:bg-gray-700/50 p-4 rounded-xl border border-gray-100 dark:border-gray-700">
+                                    <p class="text-xs text-gray-500 dark:text-gray-400 mb-1" data-i18n="fileType">النوع</p>
+                                    <p class="font-semibold text-gray-900 dark:text-white flex items-center gap-2">
+                                        <i data-lucide="tag" class="h-4 w-4 text-blue-500"></i>
+                                        ${file.mimeType ? file.mimeType.split('/')[1].toUpperCase() : 'PDF'}
+                                    </p>
+                                </div>
+                            </div>
+
+                            <button id="downloadBtn" class="w-full flex items-center justify-center gap-3 bg-blue-600 hover:bg-blue-700 text-white py-4 rounded-xl shadow-lg shadow-blue-500/20 transition-all transform hover:-translate-y-1 font-bold text-lg">
+                                <i data-lucide="download" class="h-6 w-6"></i>
+                                <span data-i18n="download">تحميل الملف</span>
+                            </button>
+                        </div>
+                    </div>
+                `;
+
+                // Re-run translations for injected content
+                appManager.applyLanguage();
+                lucide.createIcons();
+                // Handle Download
+                const btn = document.getElementById('downloadBtn');
+                btn.addEventListener('click', async () => {
+                    // File downloads not available in this local-only version
+                    toast.info(appManager?.t('fileNotAvailable') || 'File downloads are not available in this version. Files are stored as metadata only.');
+                });
+
+
+            }, 200); // Slight delay to ensure app.js initialized
+        });
+    </script>
+</body>
+</html>
